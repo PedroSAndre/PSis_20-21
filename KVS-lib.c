@@ -1,0 +1,148 @@
+#include "Basic.h"
+#include "KVS-lib.h"
+
+
+int client_sock;
+
+int establish_connection (char * group_id, char * secret)
+{
+    
+    int kvs_localserver_sock;
+    struct sockaddr_un client_sock_addr;
+    struct sockaddr_un kvs_localserver_sock_addr;
+    char * client_addr;
+    int answer;
+
+    client_addr=malloc(20*sizeof(char));
+    
+
+    client_sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(client_sock==-1){
+        printf("Error creating client socket\n");
+        return -1;
+    }
+    kvs_localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(kvs_localserver_sock==-1){
+        printf("Error creating kvs_localserver socket\n");
+        return -10;
+    }
+
+
+    memset(&kvs_localserver_sock_addr,0,sizeof(struct sockaddr_un));
+    kvs_localserver_sock_addr.sun_family=AF_UNIX;
+    strcpy(kvs_localserver_sock_addr.sun_path, server_addr);
+    
+    printf("Connecting to server...\n");
+    if(connect(client_sock, &kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
+    {
+        perror("Error connecting client socket");
+        return -2;
+    }
+    
+
+
+    printf("Do cliente: %s\n",group_id);
+    if(write(client_sock,group_id,1024*sizeof(char))==-1){
+        perror("write() error");
+        return -3;
+    }
+    if(write(client_sock,secret,1024*sizeof(char))==-1){
+        perror("write() error");
+        return -3;
+    }
+   
+
+    if(read(client_sock,&answer,sizeof(answer))==-1)
+    {
+        perror("No answer from local server");
+        return -4;
+    }
+    if(answer<0){
+        perror("Request denied");
+        return -5;
+    }
+    return 0;
+}
+
+
+
+int put_value(char * key, char * value)
+{
+    int buf=PUT;
+
+    if(write(client_sock,&buf,sizeof(buf))==-1){
+        perror("write(flag)  error");
+        return -1;
+    }
+
+    if(write(client_sock,&key,sizeof(key))==-1){
+        perror("write(key)  error");
+        return -1;
+    }
+    if(write(client_sock,&value,sizeof(value))==-1){
+        perror("write(value)  error");
+        return -2;
+    }
+
+    return 1;
+}
+
+
+int get_value(char * key, char ** value)
+{
+    int answer;
+    int buf=GET;
+
+    if(write(client_sock,&buf,sizeof(buf))==-1){
+        perror("write(flag)  error");
+        return -1;
+    }
+
+    if(write(client_sock,&key,sizeof(key))==-1){
+        perror("write(key)  error");
+        return -1;
+    }
+    if(read(client_sock,&value,sizeof(value))==-1){
+        perror("read(value)  error");
+        return -2;
+    }
+
+    if(read(client_sock,&answer,sizeof(answer))==-1)
+    {
+        perror("No answer from local server");
+        return -4;
+    }
+    if(answer<0){
+        perror("Failed");
+        return -5;
+    }
+
+    return 1;
+}
+
+
+int delete_value(char * key)
+{
+    int buf=DEL;
+
+    if(write(client_sock,&buf,sizeof(buf))==-1){
+        perror("write(flag)  error");
+        return -1;
+    }
+    if(write(client_sock,&key,sizeof(key))==-1){
+        perror("write(key)  error");
+        return -2;
+    }
+    return 1;
+}
+
+int close_connection()
+{
+    int buf=CLS;
+
+    if(write(client_sock,&buf,sizeof(buf))==-1){
+        perror("write(flag)  error");
+        return -1;
+    }
+    close(client_sock);
+}

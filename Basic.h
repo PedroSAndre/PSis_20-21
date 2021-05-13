@@ -9,8 +9,6 @@
 #include <unistd.h>
 #include <sys/un.h>
 
-
-
 //Address defenition
 #define server_addr "sockets/localserver"
 #define part_client_addr "sockets/client"

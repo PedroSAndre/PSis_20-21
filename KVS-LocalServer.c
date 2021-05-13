@@ -13,8 +13,14 @@ int main(void)
     int client_sock_addr_size;
     int client_PID;
 
+
+    char * message,* key;
+    long int valen;
+
+
     char * group_id;
     char * secret;
+
     group_id = malloc(1024*sizeof(char));
     secret = malloc(1024*sizeof(char));
 
@@ -62,6 +68,10 @@ int main(void)
 
     answer=1;
     write(client_sock,&answer,sizeof(answer));
+
+
+
+
     read(client_sock,&answer,sizeof(answer));
     if(close(client_sock)<0)
     {

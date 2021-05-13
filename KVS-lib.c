@@ -132,7 +132,7 @@ int get_value(char * key, char ** value)
     if(answer==-1){
         perror("No key");
         return -5;
-    }elseif(answer==0){
+    }else if(answer==0){
         perror("No value");
         return -5;
     }
@@ -140,7 +140,7 @@ int get_value(char * key, char ** value)
     *value = malloc (answer*sizeof(char));
     if (*value == NULL) {
         perror("Unable to alocate memory");
-        return -6
+        return -6;
     }
 
     if(read(client_sock,*value,answer*sizeof(char))==-1)
@@ -148,7 +148,6 @@ int get_value(char * key, char ** value)
         perror("No answer from local server");
         return -4;
     }
-    printf("%s",*value);
 
     return 1;
 }

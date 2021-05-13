@@ -84,7 +84,7 @@ int put_value(char * key, char * value)
     long int vallen=strlen(value);
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
-        perror("write(flag)  error");
+        perror("write(flag:PUT)  error");
         return -1;
     }
 
@@ -113,7 +113,7 @@ int get_value(char * key, char ** value)
     int buf=GET;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
-        perror("write(flag)  error");
+        perror("write(flag:GET)  error");
         return -1;
     }
 
@@ -158,7 +158,7 @@ int delete_value(char * key)
     int buf=DEL;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
-        perror("write(flag)  error");
+        perror("write(flag:DEL)  error");
         return -1;
     }
     if(write(client_sock,&key,sizeof(key))==-1){
@@ -173,8 +173,13 @@ int close_connection()
     int buf=CLS;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
-        perror("write(flag)  error");
+        perror("write(flag:CLS)  error");
         return -1;
     }
-    close(client_sock);
+    if(close(client_sock)<0)
+    {
+        perror("Error closing connection");
+        return -2;
+    }
+    return 1;
 }

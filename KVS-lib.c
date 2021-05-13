@@ -7,7 +7,7 @@ int client_sock;
 int establish_connection (char * group_id, char * secret)
 {
     
-    int kvs_localserver_sock;
+    int kvs_localserver_sock, client_pid=getpid();
     struct sockaddr_un client_sock_addr;
     struct sockaddr_un kvs_localserver_sock_addr;
     char * client_addr;
@@ -33,33 +33,45 @@ int establish_connection (char * group_id, char * secret)
     strcpy(kvs_localserver_sock_addr.sun_path, server_addr);
     
     printf("Connecting to server...\n");
+
+    memset(&client_sock_addr,0,sizeof(struct sockaddr_un));
+    client_sock_addr.sun_family=AF_UNIX;
+    sprintf(client_addr,"%s%d",part_client_addr,getpid());
+    printf("%s\n",client_addr);
+    strcpy(client_sock_addr.sun_path, client_addr); //adress defined in Basic.h
+
+
     if(connect(client_sock, &kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
     {
         perror("Error connecting client socket");
-        return -2;
+        return -3;
     }
     
 
 
-    printf("Do cliente: %s\n",group_id);
+    if(write(client_sock,&client_pid,sizeof(int))==-1){
+        perror("write(pid) error");
+        return -4;
+    }
+
     if(write(client_sock,group_id,1024*sizeof(char))==-1){
         perror("write() error");
-        return -3;
+        return -4;
     }
+
     if(write(client_sock,secret,1024*sizeof(char))==-1){
         perror("write() error");
-        return -3;
+        return -5;
     }
-   
 
     if(read(client_sock,&answer,sizeof(answer))==-1)
     {
         perror("No answer from local server");
-        return -4;
+        return -6;
     }
     if(answer<0){
         perror("Request denied");
-        return -5;
+        return -7;
     }
     return 0;
 }
@@ -69,6 +81,7 @@ int establish_connection (char * group_id, char * secret)
 int put_value(char * key, char * value)
 {
     int buf=PUT;
+    long int vallen=strlen(value);
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
         perror("write(flag)  error");
@@ -79,7 +92,13 @@ int put_value(char * key, char * value)
         perror("write(key)  error");
         return -1;
     }
-    if(write(client_sock,&value,sizeof(value))==-1){
+
+    if(write(client_sock,&vallen,sizeof(long int))==-1){
+        perror("write(value)  error");
+        return -2;
+    }
+
+    if(write(client_sock,&value,vallen*sizeof(char))==-1){
         perror("write(value)  error");
         return -2;
     }

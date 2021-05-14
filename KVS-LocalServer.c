@@ -2,15 +2,49 @@
 
 #define max_waiting_connections 10
 
+//Functions used to simplify code
+int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr)
+{
+    //Creating socket
+    *localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(*localserver_sock==-1){
+        perror("Error creating main local server socket\n");
+        return -1;
+    }
+
+    //Binding address
+    memset(localserver_sock_addr,0,sizeof(struct sockaddr_un));
+    localserver_sock_addr->sun_family=AF_UNIX;
+    strcpy(localserver_sock_addr->sun_path, server_addr); //adress defined in Basic.h
+    if(bind(*localserver_sock, localserver_sock_addr, sizeof(*localserver_sock_addr)) < 0)
+    {
+        perror("Error binding socket\n");
+        return -2;
+    }
+
+    return 0;
+}
+
+
+//Thread functions
+void acceptConnections(void *arg)
+{
+    int aux;
+    int kvs_localserver_sock;
+    struct sockaddr_un kvs_localserver_sock_addr;
+
+    aux = createAndBindServerSocket(&kvs_localserver_sock, &kvs_localserver_sock_addr);
+    if(aux<0)
+    {
+        return aux;
+    }
+}
 
 int main(void)
 {
+    
     int answer;
-    int kvs_localserver_sock;
     int client_sock;
-    struct sockaddr_un kvs_localserver_sock_addr;
-    struct sockaddr_un client_sock_addr;
-    int client_sock_addr_size;
     int client_PID;
 
     char * group_id;
@@ -20,22 +54,7 @@ int main(void)
 
     remove(server_addr); //To remove later
 
-    //Creating socket
-    kvs_localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if(kvs_localserver_sock==-1){
-        perror("Error creating client socket\n");
-        return -1;
-    }
 
-    //Binding address
-    memset(&kvs_localserver_sock_addr,0,sizeof(struct sockaddr_un));
-    kvs_localserver_sock_addr.sun_family=AF_UNIX;
-    strcpy(kvs_localserver_sock_addr.sun_path, server_addr); //adress defined in Basic.h
-    if(bind(kvs_localserver_sock, &kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
-    {
-        perror("Error binding socket\n");
-        return -2;
-    }
 
     //Waiting for connection cycle
     client_sock=0;
@@ -45,8 +64,6 @@ int main(void)
         return -3;
     }
 
-    memset(&client_sock_addr,0,sizeof(struct sockaddr_un));
-    client_sock_addr_size = 0;
     client_sock = accept(kvs_localserver_sock,NULL,NULL);
     if(client_sock<0)
     {

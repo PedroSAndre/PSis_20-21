@@ -1,5 +1,7 @@
 #include "Basic.h"
 
+#include <pthread.h>
+
 #define max_waiting_connections 10
 
 //Functions used to simplify code
@@ -36,13 +38,10 @@ void acceptConnections(void *arg)
     aux = createAndBindServerSocket(&kvs_localserver_sock, &kvs_localserver_sock_addr);
     if(aux<0)
     {
-        return aux;
+        pthread_exit((void *)&aux);
     }
-}
 
-int main(void)
-{
-    
+    //To fix later
     int answer;
     int client_sock;
     int client_PID;
@@ -52,23 +51,19 @@ int main(void)
     group_id = malloc(1024*sizeof(char));
     secret = malloc(1024*sizeof(char));
 
-    remove(server_addr); //To remove later
-
-
-
     //Waiting for connection cycle
     client_sock=0;
     if(listen(kvs_localserver_sock,max_waiting_connections)<0)
     {
         perror("Error listening for connections\n");
-        return -3;
+        pthread_exit((void *)-3);
     }
 
     client_sock = accept(kvs_localserver_sock,NULL,NULL);
     if(client_sock<0)
     {
         perror("Error connecting");
-        return -4;
+        pthread_exit((void *)-4);
     }
     read(client_sock,&client_PID,sizeof(client_PID));
     read(client_sock,group_id,(1024*sizeof(char)));
@@ -83,6 +78,31 @@ int main(void)
     if(close(client_sock)<0)
     {
         perror("Error closing connection");
-        return -5;
+        pthread_exit((void *)-5);
     }
+
+    pthread_exit((void *)0);
+}
+
+void handleConnection(void *arg)
+{
+
+}
+
+int main(void)
+{
+    pthread_t ptid;
+
+    remove(server_addr); //To remove later
+
+
+    if(pthread_create(&ptid,NULL,(void *)&acceptConnections,NULL)<0)
+    {
+        perror("Error creating thread");
+        return -6;
+    }
+
+    pthread_join(ptid,NULL);
+
+    return 0;
 }

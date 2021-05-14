@@ -91,6 +91,8 @@ void handleConnection(void *arg)
 
 int main(void)
 {
+    int aux = 1;
+    int selector = 0;
     pthread_t ptid;
 
     remove(server_addr); //To remove later
@@ -102,6 +104,18 @@ int main(void)
         return -6;
     }
 
+    printf("*****Welcome to KVS Local Server*****\n");
+    //Main control cycle
+    while(aux==1)
+    {
+        printf("Select the desired option:\n0) Shutdown server\n1) Create a group\n2) Delete a group\n3) Show group info\n4) Show app status\n\n");
+        scanf("%d", &selector);
+        printf("Option selected: %d\n\n\n", selector);
+        if(selector==0)
+        {
+            aux=0;
+        }
+    }
     pthread_join(ptid,NULL);
 
     return 0;

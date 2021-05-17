@@ -128,7 +128,38 @@ int compareHashGroup(char * group, char * secret){
 }
 
 
+void AnalysisThread(struct Message ** Main){
+    int tries=0;
+    while(tries<20){
+        if((*Main)!=NULL){
+            if((*Main)->request==PUT){
+                if((*Main)->group!=NULL && (*Main)->secret!=NULL){
+                    if(CreateUpdateEntry((*Main)->group,(*Main)->secret)==1){
+                        (*Main)=(*Main)->next;
+                        tries=0;
+                    }else{
+                        perror("Something went wrong");
+                        return;
+                    }
+                }
+            }else if((*Main)->request==GET){
+                if((*Main)->group!=NULL && (*Main)->secret!=NULL){
+                    if(compareHashGroup((*Main)->group,(*Main)->secret)<0){
+                        (*Main)=(*Main)->next;
+                        tries=0;
+                    }else{
+                        perror("Something went wrong");
+                        return;
+                    }
+                }
+            }else if((*Main)->request==DEL){
 
+            }
+        }
+        sleep(1);
+    }
+
+}
 
 
 int main(void)

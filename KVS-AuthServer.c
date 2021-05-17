@@ -27,16 +27,16 @@ int CreateUpdateEntry(char * group,char *secret){
     struct HashGroup * Current,* Previous;
     
     struct HashGroup * Novo=malloc(sizeof(struct HashGroup));
-    Novo->group=group;
-    Novo->secret=secret;
+
 
     Current=Table[TableIndex];
     if(Current==NULL){
+        Novo==malloc(sizeof(struct HashGroup));
+        Novo->group=group;
+        Novo->secret=secret;
         Table[TableIndex]=Novo;
         return 1;
     }
-
-    free(Novo);
 
     while(Current!=NULL){
 

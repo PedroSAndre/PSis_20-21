@@ -10,5 +10,5 @@ App: KVS-lib.o TestApp.o
 Server: Basic.h KVS-LocalServer.c
 	gcc -pthread KVS-LocalServer.c -o KVS-LocalServer.out
 
-rm: TestApp.out TestApp.o KVS-LocalServer.out KVS-lib.o
+rm:
 	rm TestApp.out TestApp.o KVS-LocalServer.out KVS-lib.o sockets/*

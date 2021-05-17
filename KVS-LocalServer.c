@@ -29,21 +29,10 @@ int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * local
 
 
 //Thread functions
-void acceptConnections(void *arg)
+void handleConnection(void *arg)
 {
-    int aux;
-    int kvs_localserver_sock;
-    struct sockaddr_un kvs_localserver_sock_addr;
-
-    aux = createAndBindServerSocket(&kvs_localserver_sock, &kvs_localserver_sock_addr);
-    if(aux<0)
-    {
-        pthread_exit((void *)&aux);
-    }
-
-    //To fix later
-    int answer;
     int client_sock;
+    int answer;
     int client_PID;
 
     char * group_id;
@@ -51,20 +40,8 @@ void acceptConnections(void *arg)
     group_id = malloc(1024*sizeof(char));
     secret = malloc(1024*sizeof(char));
 
-    //Waiting for connection cycle
-    client_sock=0;
-    if(listen(kvs_localserver_sock,max_waiting_connections)<0)
-    {
-        perror("Error listening for connections\n");
-        pthread_exit((void *)-3);
-    }
+    client_sock = *((int *)arg);
 
-    client_sock = accept(kvs_localserver_sock,NULL,NULL);
-    if(client_sock<0)
-    {
-        perror("Error connecting");
-        pthread_exit((void *)-4);
-    }
     read(client_sock,&client_PID,sizeof(client_PID));
     read(client_sock,group_id,(1024*sizeof(char)));
     read(client_sock,secret,(1024*sizeof(char)));
@@ -84,9 +61,45 @@ void acceptConnections(void *arg)
     pthread_exit((void *)0);
 }
 
-void handleConnection(void *arg)
+void acceptConnections(void *arg)
 {
+    int aux;
+    int kvs_localserver_sock;
+    int client_sock;
+    struct sockaddr_un kvs_localserver_sock_addr;
 
+    aux = createAndBindServerSocket(&kvs_localserver_sock, &kvs_localserver_sock_addr);
+    if(aux<0)
+    {
+        pthread_exit((void *)&aux);
+    }
+
+    //To fix later
+    pthread_t ptid;
+
+    //Waiting for connection cycle
+    client_sock=0;
+    if(listen(kvs_localserver_sock,max_waiting_connections)<0)
+    {
+        perror("Error listening for connections\n");
+        pthread_exit((void *)-3);
+    }
+
+    client_sock = accept(kvs_localserver_sock,NULL,NULL);
+    if(client_sock<0)
+    {
+        perror("Error connecting");
+        pthread_exit((void *)-4);
+    }
+
+    if(pthread_create(&ptid,NULL,(void *)&handleConnection,(void *)&client_sock)<0)
+    {
+        perror("Error creating thread");
+        pthread_exit((void *)-6);
+    }
+
+    pthread_join(ptid,NULL);
+    pthread_exit((void *)0);
 }
 
 int main(void)

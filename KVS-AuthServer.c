@@ -157,13 +157,16 @@ int main(void)
 
     //Waiting for connection cycle
     kvs_localserver_sock=0;
+    memset(&kvs_localserver_sock_addr,0,sizeof(struct sockaddr_un));
+
+    
     if(recvfrom(kvs_authserver_sock,&request,sizeof(int),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_un))<0)
     {
         perror("Error receving connection\n");
         return -3;
     }
 
-    memset(&kvs_localserver_sock_addr,0,sizeof(struct sockaddr_un));
+    
     if(bind(kvs_localserver_sock, &kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
     {
         perror("Error binding socket\n");

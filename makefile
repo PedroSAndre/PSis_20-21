@@ -8,7 +8,7 @@ App: KVS-lib.o TestApp.o
 	gcc KVS-lib.o TestApp.o -o TestApp.out
 
 Server: Basic.h KVS-LocalServer.c
-	gcc KVS-LocalServer.c -o KVS-LocalServer.out
+	gcc -pthread KVS-LocalServer.c -o KVS-LocalServer.out
 
 AuthServer: Basic.h KVS-AuthServer.c
 	gcc KVS-AuthServer.c -o KVS-AuthServer.out

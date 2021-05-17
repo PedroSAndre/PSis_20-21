@@ -1,63 +1,70 @@
 #include "Basic.h"
 
+#include <pthread.h>
+
 #define max_waiting_connections 10
 
-
-int main(void)
+//Functions used to simplify code
+int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr)
 {
-    int answer;
-    int kvs_localserver_sock;
-    int client_sock;
-    struct sockaddr_un kvs_localserver_sock_addr;
-    struct sockaddr_un client_sock_addr;
-    int client_sock_addr_size;
-    int client_PID;
-
-
-    char * message,* key;
-    long int valen;
-
-
-    char * group_id;
-    char * secret;
-
-    group_id = malloc(1024*sizeof(char));
-    secret = malloc(1024*sizeof(char));
-
-    remove(server_addr); //To remove later
 
     //Creating socket
-    kvs_localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if(kvs_localserver_sock==-1){
-        perror("Error creating client socket\n");
+    *localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(*localserver_sock==-1){
+        perror("Error creating main local server socket\n");
         return -1;
     }
 
     //Binding address
-    memset(&kvs_localserver_sock_addr,0,sizeof(struct sockaddr_un));
-    kvs_localserver_sock_addr.sun_family=AF_UNIX;
-    strcpy(kvs_localserver_sock_addr.sun_path, server_addr); //adress defined in Basic.h
-    if(bind(kvs_localserver_sock, &kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
+    memset(localserver_sock_addr,0,sizeof(struct sockaddr_un));
+    localserver_sock_addr->sun_family=AF_UNIX;
+    strcpy(localserver_sock_addr->sun_path, server_addr); //adress defined in Basic.h
+    if(bind(*localserver_sock, localserver_sock_addr, sizeof(*localserver_sock_addr)) < 0)
     {
         perror("Error binding socket\n");
         return -2;
     }
+
+    return 0;
+}
+
+
+//Thread functions
+void acceptConnections(void *arg)
+{
+    int aux;
+    int kvs_localserver_sock;
+    struct sockaddr_un kvs_localserver_sock_addr;
+
+    aux = createAndBindServerSocket(&kvs_localserver_sock, &kvs_localserver_sock_addr);
+    if(aux<0)
+    {
+        pthread_exit((void *)&aux);
+    }
+
+    //To fix later
+    int answer;
+    int client_sock;
+    int client_PID;
+
+    char * group_id;
+    char * secret;
+    group_id = malloc(1024*sizeof(char));
+    secret = malloc(1024*sizeof(char));
 
     //Waiting for connection cycle
     client_sock=0;
     if(listen(kvs_localserver_sock,max_waiting_connections)<0)
     {
         perror("Error listening for connections\n");
-        return -3;
+        pthread_exit((void *)-3);
     }
 
-    memset(&client_sock_addr,0,sizeof(struct sockaddr_un));
-    client_sock_addr_size = 0;
     client_sock = accept(kvs_localserver_sock,NULL,NULL);
     if(client_sock<0)
     {
         perror("Error connecting");
-        return -4;
+        pthread_exit((void *)-4);
     }
     read(client_sock,&client_PID,sizeof(client_PID));
     read(client_sock,group_id,(1024*sizeof(char)));
@@ -76,6 +83,45 @@ int main(void)
     if(close(client_sock)<0)
     {
         perror("Error closing connection");
-        return -5;
+        pthread_exit((void *)-5);
     }
+
+    pthread_exit((void *)0);
+}
+
+void handleConnection(void *arg)
+{
+
+}
+
+int main(void)
+{
+    int aux = 1;
+    int selector = 0;
+    pthread_t ptid;
+
+    remove(server_addr); //To remove later
+
+
+    if(pthread_create(&ptid,NULL,(void *)&acceptConnections,NULL)<0)
+    {
+        perror("Error creating thread");
+        return -6;
+    }
+
+    printf("*****Welcome to KVS Local Server*****\n");
+    //Main control cycle
+    while(aux==1)
+    {
+        printf("Select the desired option:\n0) Shutdown server\n1) Create a group\n2) Delete a group\n3) Show group info\n4) Show app status\n\n");
+        scanf("%d", &selector);
+        printf("Option selected: %d\n\n\n", selector);
+        if(selector==0)
+        {
+            aux=0;
+        }
+    }
+    pthread_join(ptid,NULL);
+
+    return 0;
 }

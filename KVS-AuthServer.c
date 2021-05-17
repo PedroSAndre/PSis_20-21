@@ -1,6 +1,120 @@
 #include "Basic.h"
 
 #define max_waiting_connections 10
+#define SIZE 101
+
+struct HashGroup {
+    char * group;
+    char * secret;
+    struct HashGroup * next;
+}
+
+struct HashGroup *Table[SIZE];
+
+
+int HashIndex(char * group){
+    int i=0;
+    int Index;
+    while(group[i]!=NULL && i<1024){
+        Index=(group[i]+Index)%SIZE;
+    }
+    return Index;
+}
+
+int CreateUpdateEntry(char * group,char *secret){
+    int TableIndex=HashIndex(group);
+    struct HashGroup * Current,* Previous;
+    
+    struct HashGroup * Novo=malloc(sizeof(struct HashGroup));
+    Novo->group=group;
+    Novo->secret=secret;
+
+    Current=Table[TableIndex];
+    if(Current==NULL){
+        Table[TableIndex]=Novo;
+        return 1;
+    }
+
+    free(Novo);
+
+    while(Current!=NULL){
+
+        if(strcmp(Current->group,group)==0){
+            Current->secret=secret;
+            return 1;
+        }
+        if(Current->next==NULL){
+            Current->next=Novo;
+            return 1;
+        }
+        Current=Current->next;
+
+    }
+    perror("Hash Error");
+    return 0;
+
+}
+
+int DeleteEntry(char * group){
+    int TableIndex=HashIndex(group);
+    struct HashGroup * Current,* Previous;
+    
+
+    Current=Table[TableIndex];
+    if(Current==NULL){
+        perror("Entry to delete not found");
+        return 0;
+    }
+
+    if(strcmp(Current->group,group)==0){
+        Table[TableIndex]=Current->Next;
+        free(Current);
+        return 1;
+    }
+    Previous=Current;
+    Current=Current->next;
+
+    while(Current!=NULL){
+
+        if(strcmp(Current->group,group)==0){
+            Previous->next=Current->next;
+            free(Current);
+            return 1;
+        }
+        Previous=Current;
+        Current=Current->next;
+
+    }
+    perror("Entry to delete not found");
+    return 0;
+
+}
+
+int compareHashGroup(char * group, char * secret){
+    int TableIndex=HashIndex(group);
+    int result=0;
+    struct HashGroup * Current,* Previous;
+    
+    Current=Table[TableIndex];
+    if(Current==NULL){
+        perror("No entry for this group");
+        return -1;
+    }
+
+    while(Current!=NULL){
+
+        if(strcmp(Current->group,group)==0){
+            if(strcmp(Current->secret,secret)==0){
+                return 1;
+            }
+            return 0;
+        }
+        Current=Current->next;
+
+    }
+    perror("No entry for this group");
+    return -1;
+}
 
 int main(void)
 {

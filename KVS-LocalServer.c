@@ -94,14 +94,6 @@ void acceptConnections(void *arg)
     }
 
     if(pthread_create(&ptid,NULL,(void *)&handleConnection,(void *)&client_sock)<0)
-    answer=1;
-    write(client_sock,&answer,sizeof(answer));
-
-
-
-
-    read(client_sock,&answer,sizeof(answer));
-    if(close(client_sock)<0)
     {
         perror("Error creating thread");
         pthread_exit((void *)-6);

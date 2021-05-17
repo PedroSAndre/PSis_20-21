@@ -7,7 +7,7 @@ struct HashGroup {
     char * group;
     char * secret;
     struct HashGroup * next;
-}
+};
 
 struct HashGroup *Table[SIZE];
 
@@ -15,8 +15,9 @@ struct HashGroup *Table[SIZE];
 int HashIndex(char * group){
     int i=0;
     int Index;
-    while(group[i]!=NULL && i<1024){
+    while(group[i]!='\0' && i<1024){
         Index=(group[i]+Index)%SIZE;
+        i++;
     }
     return Index;
 }
@@ -67,7 +68,7 @@ int DeleteEntry(char * group){
     }
 
     if(strcmp(Current->group,group)==0){
-        Table[TableIndex]=Current->Next;
+        Table[TableIndex]=Current->next;
         free(Current);
         return 1;
     }
@@ -100,7 +101,7 @@ int compareHashGroup(char * group, char * secret){
         perror("No entry for this group");
         return -1;
     }
-
+    
     while(Current!=NULL){
 
         if(strcmp(Current->group,group)==0){
@@ -118,7 +119,7 @@ int compareHashGroup(char * group, char * secret){
 
 int main(void)
 {
-    int answer;
+    /*int answer;
     int request;
     int kvs_authserver_sock;
     int kvs_localserver_sock;
@@ -175,5 +176,20 @@ int main(void)
     {
         perror("Error closing connection");
         return -5;
-    }
+    }*/
+
+    char group[10]="Group-A";
+    char secret[10]="Secret-A";
+    char secret2[10]="Secret-B";
+
+
+    printf("Compare:%d\n",compareHashGroup(group,secret));
+    printf("Delete:%d\n",DeleteEntry(group));
+    printf("Create:%d\n",CreateUpdateEntry(group,secret));
+    printf("Update:%d\n",CreateUpdateEntry(group,secret2));
+    printf("Compare:%d\n",compareHashGroup(group,secret));
+    printf("Compare:%d\n",compareHashGroup(group,secret2));
+    printf("Delete:%d\n",DeleteEntry(group));
+    return 0;
+
 }

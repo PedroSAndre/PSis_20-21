@@ -10,5 +10,8 @@ App: KVS-lib.o TestApp.o
 Server: Basic.h KVS-LocalServer.c
 	gcc KVS-LocalServer.c -o KVS-LocalServer.out
 
+AuthServer: Basic.h KVS-AuthServer.c
+	gcc KVS-AuthServer.c -o KVS-AuthServer.out
+
 rm: TestApp.out TestApp.o KVS-LocalServer.out KVS-lib.o
 	rm TestApp.out TestApp.o KVS-LocalServer.out KVS-lib.o sockets/*

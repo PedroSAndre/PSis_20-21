@@ -84,23 +84,23 @@ int put_value(char * key, char * value)
     long int vallen=strlen(value);
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
-        perror("write(flag)  error");
+        perror("write(flag:PUT)  error");
         return -1;
     }
 
     if(write(client_sock,&key,sizeof(key))==-1){
         perror("write(key)  error");
-        return -1;
+        return -2;
     }
 
     if(write(client_sock,&vallen,sizeof(long int))==-1){
-        perror("write(value)  error");
-        return -2;
+        perror("write(vallen)  error");
+        return -3;
     }
 
     if(write(client_sock,&value,vallen*sizeof(char))==-1){
         perror("write(value)  error");
-        return -2;
+        return -4;
     }
 
     return 1;
@@ -109,11 +109,11 @@ int put_value(char * key, char * value)
 
 int get_value(char * key, char ** value)
 {
-    int answer;
+    long int answer;
     int buf=GET;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
-        perror("write(flag)  error");
+        perror("write(flag:GET)  error");
         return -1;
     }
 
@@ -121,19 +121,32 @@ int get_value(char * key, char ** value)
         perror("write(key)  error");
         return -1;
     }
-    if(read(client_sock,&value,sizeof(value))==-1){
-        perror("read(value)  error");
-        return -2;
-    }
+
+
 
     if(read(client_sock,&answer,sizeof(answer))==-1)
     {
         perror("No answer from local server");
         return -4;
     }
-    if(answer<0){
-        perror("Failed");
+    if(answer==-1){
+        perror("No key");
         return -5;
+    }else if(answer==0){
+        perror("No value");
+        return -5;
+    }
+
+    *value = malloc (answer*sizeof(char));
+    if (*value == NULL) {
+        perror("Unable to alocate memory");
+        return -6;
+    }
+
+    if(read(client_sock,*value,answer*sizeof(char))==-1)
+    {
+        perror("No answer from local server");
+        return -4;
     }
 
     return 1;
@@ -145,7 +158,7 @@ int delete_value(char * key)
     int buf=DEL;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
-        perror("write(flag)  error");
+        perror("write(flag:DEL)  error");
         return -1;
     }
     if(write(client_sock,&key,sizeof(key))==-1){
@@ -160,8 +173,13 @@ int close_connection()
     int buf=CLS;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
-        perror("write(flag)  error");
+        perror("write(flag:CLS)  error");
         return -1;
     }
-    close(client_sock);
+    if(close(client_sock)<0)
+    {
+        perror("Error closing connection");
+        return -2;
+    }
+    return 1;
 }

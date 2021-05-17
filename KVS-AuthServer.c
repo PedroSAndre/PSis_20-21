@@ -119,7 +119,7 @@ int compareHashGroup(char * group, char * secret){
 
 int main(void)
 {
-    /*int answer;
+    int answer;
     int request;
     int kvs_authserver_sock;
     int kvs_localserver_sock;
@@ -176,20 +176,7 @@ int main(void)
     {
         perror("Error closing connection");
         return -5;
-    }*/
-
-    char group[10]="Group-A";
-    char secret[10]="Secret-A";
-    char secret2[10]="Secret-B";
-
-
-    printf("Compare:%d\n",compareHashGroup(group,secret));
-    printf("Delete:%d\n",DeleteEntry(group));
-    printf("Create:%d\n",CreateUpdateEntry(group,secret));
-    printf("Update:%d\n",CreateUpdateEntry(group,secret2));
-    printf("Compare:%d\n",compareHashGroup(group,secret));
-    printf("Compare:%d\n",compareHashGroup(group,secret2));
-    printf("Delete:%d\n",DeleteEntry(group));
+    }
     return 0;
 
 }

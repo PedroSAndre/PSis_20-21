@@ -177,7 +177,7 @@ int main(void)
 
 
     while(1){
-        
+
         if(recvfrom(kvs_authserver_sock,buf,sizeof(buf),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in))<0)
         {
             perror("Error receving connection\n");
@@ -247,9 +247,6 @@ int main(void)
                 strcpy(Current->group,buf);
             }
         }
-
-
-
 
         
         if(bind(kvs_localserver_sock, &kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)

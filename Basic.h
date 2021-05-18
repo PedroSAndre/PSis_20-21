@@ -8,12 +8,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/un.h>
+#include <netinet/in.h>
 
 //Address defenition
 #define server_addr "sockets/localserver"
 #define part_client_addr "sockets/client"
 
 //Flags defenition
+#define WAIT 0
 #define PUT 1
 #define GET 2
 #define DEL 3

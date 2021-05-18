@@ -15,6 +15,7 @@
 #define part_client_addr "sockets/client"
 
 //Flags defenition
+#define WAIT 0
 #define PUT 1
 #define GET 2
 #define DEL 3

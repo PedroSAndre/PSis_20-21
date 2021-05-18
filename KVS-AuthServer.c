@@ -12,10 +12,8 @@ struct HashGroup {
 
 struct Message{
     struct sockaddr_in clientaddr;
-    int nrequest;
     int request;
     char * group;
-    char * secret;
     struct Message * next;
 };
 
@@ -128,50 +126,19 @@ int compareHashGroup(char * group, char * secret){
 }
 
 
-void AnalysisThread(struct Message ** Main){
-    int tries=0;
-    while(tries<20){
-        if((*Main)!=NULL){
-            if((*Main)->request==PUT){
-                if((*Main)->group!=NULL && (*Main)->secret!=NULL){
-                    if(CreateUpdateEntry((*Main)->group,(*Main)->secret)==1){
-                        (*Main)=(*Main)->next;
-                        tries=0;
-                    }else{
-                        perror("Something went wrong");
-                        return;
-                    }
-                }
-            }else if((*Main)->request==GET){
-                if((*Main)->group!=NULL && (*Main)->secret!=NULL){
-                    if(compareHashGroup((*Main)->group,(*Main)->secret)<0){
-                        (*Main)=(*Main)->next;
-                        tries=0;
-                    }else{
-                        perror("Something went wrong");
-                        return;
-                    }
-                }
-            }else if((*Main)->request==DEL){
 
-            }
-        }
-        sleep(1);
-    }
-
-}
 
 
 int main(void)
 {
     int answer;
-    int nmess, ident;
+    int request, ident;
     int kvs_authserver_sock;
     int kvs_localserver_sock;
     struct sockaddr_in kvs_authserver_sock_addr;
     struct sockaddr_in kvs_localserver_sock_addr;
 
-    struct Message * Current, * Main;
+    struct Message * Current, * Main, *Previous;
 
 
 
@@ -182,7 +149,7 @@ int main(void)
 
     group_id = malloc(1024*sizeof(char));
     secret = malloc(1024*sizeof(char));
-    buf = malloc(1024*sizeof(char));
+    buf = malloc(1030*sizeof(char));
 
 
 
@@ -216,44 +183,67 @@ int main(void)
             return -3;
         }
 
-        sscanf(buf,"%d:%d:%s",&nmess,&ident,buf);
+        
         Current=Main;
-        if(ident==0)
+        if(Current==NULL)
         {
-            if(Current==NULL)
-            {
-                Current=malloc(sizeof(struct Message));
-                Main=Current;
-                strcpy(Current->request,buf);
-                Current->clientaddr=kvs_localserver_sock_addr;
-                Current->nrequest=nmess;
-            }
-            while(Current->next!=NULL)
-            {
-                Current=Current->next;
-            }
-            Current->next=malloc(sizeof(struct Message));
-            strcpy(Current->request,buf);
+            sscanf(buf,"%d",&request);
+            Current=malloc(sizeof(struct Message));
+            Main=Current;
             Current->clientaddr=kvs_localserver_sock_addr;
-            Current->nrequest=nmess;
-        }else{
-            if(Current==NULL){
-                perror("Lost message");
-                return -3;               
-            }
-            while((Current->nrequest!=nmess || Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr) && Current->next !=NULL){
-                Current=Current->next;
-            }
-            if(Current->nrequest!=nmess || Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr){
-                perror("Lost message");
-                return -3;
-            }
-            if (ident==1){
-                sprintf(buf,"%d",Current->request);
-            }else if(ident==2){
+            Current->request=request;
+        }
+
+        while((Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr) && Current->next !=NULL){
+            Previous=Current;
+            Current=Current->next;
+        }
+        if(Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr){
+            Previous=Current;
+            sscanf(buf,"%d",&request);
+            Current=malloc(sizeof(struct Message));
+            Current->clientaddr=kvs_localserver_sock_addr;
+            Current->request=request;
+            Previous->next=Current;
+        }else if(Current->request==WAIT){
+            sscanf(buf,"%d",&request);
+            Current->request=request;
+        }else if (Current->request==PUT){
+            if(Current->group=='\0'){
                 strcpy(Current->group,buf);
-            }else if(ident==3){
-                strcpy(Current->secret,buf);
+            }else{
+                if(CreateUpdateEntry(Current->group,buf)==1){
+                    strcpy(Current->group,'\0');
+                    Current->request=0;
+                }else{
+                    perror("Something went wrong");
+                    return -5;
+                }
+            }
+        }else if(Current->request==GET){
+            if(Current->group=='\0'){
+                strcpy(Current->group,buf);
+            }else{
+                answer=compareHashGroup(Current->group,buf);
+                if(answer>=0){
+                    strcpy(Current->group,'\0');
+                    Current->request=0;
+                }else{
+                    perror("Something went wrong");
+                    return -5;
+                }
+            }
+        }else if(Current->request==DEL){
+            if(Current->group=='\0'){
+               ;
+                if(DeleteEntry(buf)==1){
+                    strcpy(Current->group,'\0');
+                    Current->request=0;
+                }else{
+                    perror("Something went wrong");
+                    return -5;
+                }
+                strcpy(Current->group,buf);
             }
         }
 

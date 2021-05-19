@@ -1,8 +1,7 @@
 #include "Basic.h"
+#include "key_value_struct.h"
 
 #include <pthread.h>
-
-#define max_waiting_connections 10
 
 //Declaration of functions writen in the end
 int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr);

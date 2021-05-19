@@ -14,6 +14,14 @@
 #define server_addr "sockets/localserver"
 #define part_client_addr "sockets/client"
 
+//Constant definition
+#define max_waiting_connections 10
+#define key_max_size 512
+#define group_id_max_size 1024
+//Tables sizes
+#define key_value_table_size 1021
+#define n_groups_max 1021
+
 //Flags defenition
 #define WAIT 0
 #define PUT 1

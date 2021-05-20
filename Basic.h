@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <time.h>
 
 //Address defenition
 #define server_addr "sockets/localserver"

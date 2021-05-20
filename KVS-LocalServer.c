@@ -41,6 +41,8 @@ int main(void)
     }
     pthread_join(acepting_thread_ptid,NULL);
 
+    printf("Server terminated sucessfully\n");
+
     return 0;
 }
 

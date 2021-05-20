@@ -15,15 +15,16 @@ struct key_value
 struct group_table
 {
     char group[group_id_max_size];
-    struct key_value * table;
+    int ptid;
+    struct tm * connection_time;
+    struct tm * close_connection_time;
+    struct key_value * key_value_table;
     struct group_value * next;
 };
 
 
 //Returns the hash code generated for a certain string (argument key)
 int hashCode_key_value(char* key);
-
-//Returns the hash code generated for a certain string (argument key)
 int hashCode_group_table(char* key);
 
 //Returns a new inicialized table (if it fails returns NULL)
@@ -36,9 +37,9 @@ int hashInsert_group_table(struct group_table * table, char * group, struct key_
 
 //Getting elements (returns element in sucess, NULL if failed)
 char * hashGet_key_value(struct key_value * table, char * key);
-char * hashGet_group_table(struct group_table * table, char * group);
+struct group_table * hashGet_group_table(struct group_table * table, char * group);
 
-//Deleting elements (returns 0 in sucess, -1 if failed to find, -2 if failed to insert)
+//Deleting elements (returns 0 in sucess, -1 if failed to find, -2 if failed to delete)
 int hashDelete_key_value(struct key_value * table, char * key);
 int hashDelete_group_table(struct group_table * table, char * group);
 

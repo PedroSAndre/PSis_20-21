@@ -99,7 +99,7 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
 
 int hashInsert_group_table(struct group_table * table, char * group, struct key_value * key_value_table);
 
-//Getting elements (returns 0 in sucess, -1 if failed to find, -2 if failed to insert)
+//Getting elements (returns element in sucess, NULL if failed)
 char * hashGet_key_value(struct key_value * table, char * key)
 {
     int aux;
@@ -122,15 +122,61 @@ char * hashGet_key_value(struct key_value * table, char * key)
         }
         else
         {
-            printf("got here\n");
             return NULL;
         }   
     }
 }
 
 
-char * hashGet_group_table(struct group_table * table, char * group);
+struct group_table * hashGet_group_table(struct group_table * table, char * group);
 
-//Deleting elements (returns 0 in sucess, -1 if failed to find, -2 if failed to insert)
-int hashDelete_key_value(struct key_value * table, char * key);
+//Deleting elements (returns 0 in sucess, -1 if failed to find, -2 if failed to delete)
+int hashDelete_key_value(struct key_value * table, char * key)
+{
+    int aux;
+    struct key_value * aux2;
+    aux = hashCode_key_value(key);
+    if(strcmp(table[aux].key, key) == 0) //Same key
+    {
+        if(table[aux].next == NULL)
+        {
+            strcpy(table[aux].key, "\0");
+            free(table[aux].value);
+            table[aux].value = NULL;
+        }
+        else
+        {
+            strcpy(table[aux].key, key);
+        }
+        table[aux].value = malloc(strlen(value)*sizeof(char));
+        strcpy(table[aux].value, value);
+    }
+    else
+    {
+        aux2 = table + aux*sizeof(struct key_value);
+        while(aux2->next != NULL && strcmp(aux2->key, key) != 0)
+        {
+            aux2 = aux2->next;
+        }
+        if(strcmp(aux2->key, key) == 0)
+        {
+            strcpy(aux2->value, value);
+        }
+        else
+        {
+            aux2->next = malloc(sizeof(struct key_value));
+            aux2 = aux2->next;
+            if(aux2 == NULL)
+            {
+                return -1;
+            }
+            aux2->next=NULL;
+            strcpy(aux2->key, key);
+            aux2->value = malloc(strlen(value)*sizeof(char));
+            strcpy(aux2->value, value);
+        }   
+    }
+
+    return 0;
+}
 int hashDelete_group_table(struct group_table * table, char * group);

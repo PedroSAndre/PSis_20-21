@@ -22,7 +22,7 @@ struct HashGroup *Table[SIZE];
 
 int HashIndex(char * group){
     int i=0;
-    int Index;
+    int Index=0;
     while(group[i]!='\0' && i<1024){
         Index=(group[i]+Index)%SIZE;
         i++;
@@ -204,6 +204,7 @@ int main(void)
             sscanf(buf,"%d",&request);
             Current=malloc(sizeof(struct Message));
             Current->clientaddr=kvs_localserver_sock_addr;
+            Current->group='\0';
             Current->request=request;
             Previous->next=Current;
         }else if(Current->request==WAIT){
@@ -235,16 +236,13 @@ int main(void)
                 }
             }
         }else if(Current->request==DEL){
-            if(Current->group=='\0'){
-               ;
-                if(DeleteEntry(buf)==1){
-                    strcpy(Current->group,'\0');
-                    Current->request=0;
-                }else{
-                    perror("Something went wrong");
-                    return -5;
-                }
-                strcpy(Current->group,buf);
+            answer=DeleteEntry(buf)
+            if(answer==1){
+                strcpy(Current->group,'\0');
+                Current->request=0;
+            }else{
+                perror("Something went wrong");
+                return -5;
             }
         }
 

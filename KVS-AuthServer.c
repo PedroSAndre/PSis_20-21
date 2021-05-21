@@ -281,27 +281,53 @@ int main(void)
 
     buf = malloc(1024*sizeof(char));
 
-    sprintf(buf,"Ok");
+    sprintf(buf,"%d:First Test Group",PUT);
     set[0]=malloc(1024*sizeof(char));
     strcpy(set[0],buf);
 
-    sprintf(buf,"%d:kbdihbvisdhbisbkdjbcbisjvb",CMP);
+    sprintf(buf,"Secret 1");
     set[1]=malloc(1024*sizeof(char));
     strcpy(set[1],buf);
 
-    sprintf(buf,"kbdihbvibefvidb");
+    sprintf(buf,"%d:kbdihbvisdhbisbkdjbcbisjvb",CMP);
     set[2]=malloc(1024*sizeof(char));
     strcpy(set[2],buf);
 
-    sprintf(buf,"%d:kbdihbvisdhbisbkdjbcbisjvb",DEL);
+    sprintf(buf,"kbdihbvibefvidb");
     set[3]=malloc(1024*sizeof(char));
     strcpy(set[3],buf);
 
-    sprintf(buf,"%d:wiudbubsvcuybwuyvbwu",GET);
+    sprintf(buf,"%d:kbdihbvisdhbisbkdjbcbisjvb",DEL);
     set[4]=malloc(1024*sizeof(char));
     strcpy(set[4],buf);
 
-    
+    sprintf(buf,"%d:wiudbubsvcuybwuyvbwu",GET);
+    set[5]=malloc(1024*sizeof(char));
+    strcpy(set[5],buf);
+
+    sprintf(buf,"OK");
+    set[6]=malloc(1024*sizeof(char));
+    strcpy(set[6],buf);
+
+    sprintf(buf,"%d:First Test Group",CMP);
+    set[7]=malloc(1024*sizeof(char));
+    strcpy(set[7],buf);
+
+    sprintf(buf,"Secret 1");
+    set[8]=malloc(1024*sizeof(char));
+    strcpy(set[8],buf);
+
+    sprintf(buf,"%d:First Test Group",CMP);
+    set[9]=malloc(1024*sizeof(char));
+    strcpy(set[9],buf);
+
+    sprintf(buf,"Secret 2");
+    set[10]=malloc(1024*sizeof(char));
+    strcpy(set[10],buf);
+
+     sprintf(buf,"%d:First Test Group",GET);
+    set[11]=malloc(1024*sizeof(char));
+    strcpy(set[11],buf);   
 
     //Creating socket
     kvs_authserver_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -328,7 +354,7 @@ int main(void)
 
     
     i=0;
-    while(i<5){
+    while(i<12){
         answer=0;
         
 
@@ -359,7 +385,7 @@ int main(void)
                 answer=-1;
             }
             if (Current->request==PUT){
-                if(Current->secret!="\0"){
+                if(strcmp(Current->secret,"\0")!=0){
                     if(CreateUpdateEntry(Current->group,Current->secret)==1){
                         Main=deleteMessage(Current,Main);
                         answer=1;
@@ -381,14 +407,14 @@ int main(void)
                 answer=GET;
             //Delete entry for group
             }else if(Current->request==DEL){
-                if(Current->secret!="\0"){
+                if(strcmp(Current->secret,"\0")!=0){
                     answer=DeleteEntry(Current->group,Current->secret);
                     Main=deleteMessage(Current,Main);
                 }else{
                     answer=1;
                 } 
             }else if(Current->request==CMP){
-                if(Current->secret!="\0"){
+                if(strcmp(Current->secret,"\0")!=0){
                     answer=compareHashGroup(Current->group,Current->secret);
                     Main=deleteMessage(Current,Main);
                 }else{

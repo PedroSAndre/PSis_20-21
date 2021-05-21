@@ -1,15 +1,11 @@
 #include "Basic.h"
+#include "Auth_group_secret.h"
 #include <arpa/inet.h>
 
 
-#define max_waiting_connections 10
 #define SIZE 101
 
-struct HashGroup {
-    char * group;
-    char * secret;
-    struct HashGroup * next;
-};
+
 
 struct Message{
     struct sockaddr_in clientaddr;
@@ -19,155 +15,8 @@ struct Message{
     struct Message * next;
 };
 
+
 struct HashGroup * Table[SIZE];
-
-
-int HashIndex(char * group){
-    int i=0;
-    int Index=0;
-    while(group[i]!='\0' && i<group_id_max_size){
-        Index=(group[i]+Index)%SIZE;
-        i++;
-    }
-    return Index;
-}
-
-int CreateUpdateEntry(char * group,char *secret){
-    int TableIndex=HashIndex(group);
-    struct HashGroup * Current,* Previous;
-    
-    struct HashGroup * Novo;
-
-
-
-    Current=Table[TableIndex];
-    if(Current==NULL){
-        Novo=malloc(sizeof(struct HashGroup));
-        if (Novo ==NULL){
-            perror("Error alocating memory");
-            return -1;
-        }
-        Novo->group=malloc(group_id_max_size*sizeof(char));
-        Novo->secret=malloc(secret_max_size*sizeof(char));
-        strcpy(Novo->group,group);
-        strcpy(Novo->secret,secret);
-        Novo->next=NULL;
-        Table[TableIndex]=Novo;
-        return 1;
-    }
-
-    while(Current!=NULL){
-
-        if(strcmp(Current->group,group)==0){
-            strcpy(Current->secret,secret);
-            return 1;
-        }
-        if(Current->next==NULL){
-            Novo=malloc(sizeof(struct HashGroup));
-            if (Novo ==NULL){
-                perror("Error alocating memory");
-                return -1;
-            }
-            Novo->group=malloc(group_id_max_size*sizeof(char));
-            Novo->secret=malloc(secret_max_size*sizeof(char));
-            strcpy(Novo->group,group);
-            strcpy(Novo->secret,secret);
-            Novo->next=NULL;
-            Current->next=Novo;
-            return 1;
-        }
-        Current=Current->next;
-
-    }
-
-}
-
-int DeleteEntry(char * group, char * secret){
-    int TableIndex=HashIndex(group);
-    struct HashGroup * Current,* Previous;
-    
-    Current=Table[TableIndex];
-    if(Current==NULL){
-        perror("Entry to delete not found");
-        return 0;
-    }
-
-    if(strcmp(Current->group,group)==0){
-        if(strcmp(Current->secret,secret)==0){
-            Table[TableIndex]=Current->next;
-            free(group);
-            free(secret);
-            free(Current);
-            return 1;
-        }else{
-            perror("Delete request denied");
-            return -1;
-        }
-    }
-    Previous=Current;
-    Current=Current->next;
-
-    while(Current!=NULL){
-
-        if(strcmp(Current->group,group)==0){
-            if(strcmp(Current->secret,secret)==0){
-                if(Current->secret==secret){
-                    Previous->next=Current->next;
-                    free(Current);
-                    return 1; 
-                }else{
-                    perror("Delete request denied");
-                    return -1;
-                }
-            }
-        }
-        Previous=Current;
-        Current=Current->next;
-    }
-    perror("Entry to delete not found");
-    return 0;
-
-}
-
-char * getGroupSecret(char * group){
-    int TableIndex=HashIndex(group);
-    int result=0;
-    struct HashGroup * Current,* Previous;
-    char * noentry="\0";
-    
-    Current=Table[TableIndex];
-    if(Current==NULL){
-        perror("No entry for this group");
-        return noentry;
-    }
-    
-    while(Current!=NULL){
-        if(strcmp(Current->group,group)==0){
-            return Current->secret;
-        }
-        Current=Current->next;
-
-    }
-    perror("No entry for this group");
-    return noentry;
-}
-
-int compareHashGroup(char * group, char * checksecret){
-    char * secret;
-
-    secret=getGroupSecret(group);
-    if(secret!=NULL){
-        if(strcmp(secret,checksecret)==0){
-            return 1;
-        }else{
-            return 0;
-        }
-    }else{
-        return -1;
-    }
-    
-}
-
 
 
 struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main){
@@ -273,61 +122,9 @@ int main(void)
     char * group=malloc(1024*sizeof(char));
     char * secret;
     char * buf;
-
-    int nset=100;
-    char * set[nset];
-    int i=0;
     
 
     buf = malloc(1024*sizeof(char));
-
-    sprintf(buf,"%d:First Test Group",PUT);
-    set[0]=malloc(1024*sizeof(char));
-    strcpy(set[0],buf);
-
-    sprintf(buf,"Secret 1");
-    set[1]=malloc(1024*sizeof(char));
-    strcpy(set[1],buf);
-
-    sprintf(buf,"%d:kbdihbvisdhbisbkdjbcbisjvb",CMP);
-    set[2]=malloc(1024*sizeof(char));
-    strcpy(set[2],buf);
-
-    sprintf(buf,"kbdihbvibefvidb");
-    set[3]=malloc(1024*sizeof(char));
-    strcpy(set[3],buf);
-
-    sprintf(buf,"%d:kbdihbvisdhbisbkdjbcbisjvb",DEL);
-    set[4]=malloc(1024*sizeof(char));
-    strcpy(set[4],buf);
-
-    sprintf(buf,"%d:wiudbubsvcuybwuyvbwu",GET);
-    set[5]=malloc(1024*sizeof(char));
-    strcpy(set[5],buf);
-
-    sprintf(buf,"OK");
-    set[6]=malloc(1024*sizeof(char));
-    strcpy(set[6],buf);
-
-    sprintf(buf,"%d:First Test Group",CMP);
-    set[7]=malloc(1024*sizeof(char));
-    strcpy(set[7],buf);
-
-    sprintf(buf,"Secret 1");
-    set[8]=malloc(1024*sizeof(char));
-    strcpy(set[8],buf);
-
-    sprintf(buf,"%d:First Test Group",CMP);
-    set[9]=malloc(1024*sizeof(char));
-    strcpy(set[9],buf);
-
-    sprintf(buf,"Secret 2");
-    set[10]=malloc(1024*sizeof(char));
-    strcpy(set[10],buf);
-
-     sprintf(buf,"%d:First Test Group",GET);
-    set[11]=malloc(1024*sizeof(char));
-    strcpy(set[11],buf);   
 
     //Creating socket
     kvs_authserver_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -353,27 +150,16 @@ int main(void)
     kvs_localserver_sock_addr.sin_addr.s_addr=inet_addr("127.0.0.1");
 
     
-    i=0;
-    while(i<12){
+    while(1){
         answer=0;
         
-
-        /*
 
         if(recvfrom(kvs_authserver_sock,buf,sizeof(buf),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in))<0)
         {
             perror("Error receving connection\n");
             return -3;
         }
-        */
-
-       strcpy(buf,set[i]);
-       i++;
-
-       printf("%s\n",buf);
-
-
-
+        
 
         Current=recoverClientMessage(buf,kvs_localserver_sock_addr,&Main);
 
@@ -399,8 +185,8 @@ int main(void)
             }else if(Current->request==GET){
                 secret=getGroupSecret(Current->group);
                 
-                //sendto(kvs_authserver_sock,secret,sizeof(secret),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
-                printf("%s\n",secret);
+                sendto(kvs_authserver_sock,secret,sizeof(secret),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
+                printf("Secret:%s\n",secret);
 
                 free(Current->group);
                 free(Current);
@@ -427,8 +213,8 @@ int main(void)
 
         
         if(answer!=GET){
-            //sendto(kvs_authserver_sock,&answer,sizeof(int),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
-            printf("%d\n",answer);
+            sendto(kvs_authserver_sock,&answer,sizeof(int),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
+            printf("Answer:%d\n",answer);
         }   
         
     }

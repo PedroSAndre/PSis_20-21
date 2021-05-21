@@ -4,7 +4,7 @@
 #define key_max_size 512
 #define group_id_max_size 1024
 
-//Structs to be used to store key_value pairs
+//Structs to be used to store key_value pairs and group_table pairs
 struct key_value
 {
     char key[key_max_size];
@@ -15,9 +15,6 @@ struct key_value
 struct group_table
 {
     char group[group_id_max_size];
-    int ptid;
-    struct tm * connection_time;
-    struct tm * close_connection_time;
     struct key_value * key_value_table;
     struct group_value * next;
 };
@@ -37,10 +34,13 @@ int hashInsert_group_table(struct group_table * table, char * group, struct key_
 
 //Getting elements (returns element in sucess, NULL if failed)
 char * hashGet_key_value(struct key_value * table, char * key);
-struct group_table * hashGet_group_table(struct group_table * table, char * group);
+struct key_value * hashGet_group_table(struct group_table * table, char * group);
 
-//Deleting elements (returns 0 in sucess, -1 if failed to find, -2 if failed to delete)
+//Deleting elements (returns 0 in sucess, -1 if failed to find)
 int hashDelete_key_value(struct key_value * table, char * key);
 int hashDelete_group_table(struct group_table * table, char * group);
 
+//Frees the memory on the end of execution (returns 0 in sucess, -1 if failed to find)
+int hashFree_key_value(struct key_value * table);
+int hashFree_group_table(struct key_value * table);
 #endif

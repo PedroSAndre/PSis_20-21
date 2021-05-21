@@ -3,6 +3,14 @@
 
 #include <pthread.h>
 
+struct app_status
+{
+    pthread_t process_ptid;
+    int client_ptid;
+    time_t connection_time;
+    time_t close_time;
+};
+
 //Declaration of functions writen in the end
 int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr);
 void acceptConnections(void *arg);
@@ -10,36 +18,103 @@ void handleConnection(void *arg);
 
 //Global variables (to be shared across all server threads)
 int server_status = 1; //1 -> ON; 0 -> OFF 
+int clients_connected;
+struct group_table * groups; //hash table with all groups
+struct app_status * clients; //struct with all clients and their time information
 
 int main(void)
 {
     int cycle_status = 1;
-    int selector = 0;
-    pthread_t acepting_thread_ptid;
+    int selector;
+    int aux = 0;
+    char input_string[input_string_max_size];
+    char input_string2[input_string_max_size];
+    pthread_t acepting_connections_thread_ptid;
+    struct key_value * aux_key_value;
 
-    remove(server_addr); //To remove later
 
+    //Inicialization of client struct
+    clients = malloc(sizeof(struct app_status));
+    clients[0].process_ptid = getpid();
+    time(&(clients[0].connection_time));
+    clients_connected = 0;
 
-    if(pthread_create(&acepting_thread_ptid,NULL,(void *)&acceptConnections,NULL)<0)
+    groups = hashCreateInicialize_group_table();
+
+    if(groups == NULL)
+    {
+        printf("Error inicializing group_table");
+        return -1;
+    }
+
+    if(pthread_create(&acepting_connections_thread_ptid,NULL,(void *)&acceptConnections,NULL)<0)
     {
         perror("Error creating thread");
-        return -6;
+        return -1;
     }
 
     printf("*****Welcome to KVS Local Server*****\n");
     //Main control cycle
     while(cycle_status)
     {
+        selector = 5; //To make sure the server does nothing in case of a bad read
         printf("Select the desired option:\n0) Shutdown server\n1) Create a group\n2) Delete a group\n3) Show group info\n4) Show app status\n\n");
-        scanf("%d", &selector);
-        printf("Option selected: %d\n\n", selector);
+        fgets(input_string, input_string_max_size, stdin);
+        if(sscanf(input_string, "%d", &selector) < 1)
+        {
+            printf("The option you inserted is not valid\nPlease enter a positive integer between 0-4\n\n");
+            selector = 5;
+        }
         if(selector==0)
         {
             server_status=0;
             cycle_status=0;
         }
+        else if(selector==1)
+        {
+            printf("Insert the new group ID: ");
+            fgets(input_string, group_id_max_size, stdin);
+            printf("Insert the secret: ");
+            fgets(input_string2, secret_max_size, stdin);
+
+            //Send key to auth-server
+
+            aux_key_value = hashCreateInicialize_key_value();
+            if(aux_key_value != NULL){
+                if(hashInsert_group_table(groups, input_string, aux_key_value) == 0){
+                    printf("Group created with sucess\n\n");}
+                else{
+                    printf("Error creating group\n\n");}}
+            else{
+                printf("Error creating group\n\n");}
+        }
+        else if(selector==2)
+        {
+            printf("Insert the group ID to delete: ");
+            fgets(input_string, group_id_max_size, stdin);
+            if(hashDelete_group_table(groups, input_string) == 0){
+                printf("Group deleted with sucess\n\n");}
+            else{
+                printf("Error deleting group\n\n");}
+        }
+        else if(selector == 3)
+        {
+            //easy to implment
+        }
+        else if(selector == 4)
+        {
+            if(clients_connected>0)
+            {
+                for(int i=1;i<clients_connected;i++)
+                {
+                    //printf("Client_pid: %d, ", );
+                }
+            }
+
+        }
     }
-    pthread_join(acepting_thread_ptid,NULL);
+
+    pthread_join(acepting_connections_thread_ptid,NULL);
 
     printf("Server terminated sucessfully\n");
 
@@ -49,7 +124,8 @@ int main(void)
 //Functions used to simplify code
 int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr)
 {
-
+    //To make sure the address is free
+    remove(server_addr);
     //Creating socket
     *localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if(*localserver_sock==-1){
@@ -60,7 +136,7 @@ int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * local
     //Binding address
     memset(localserver_sock_addr,0,sizeof(struct sockaddr_un));
     localserver_sock_addr->sun_family=AF_UNIX;
-    strcpy(localserver_sock_addr->sun_path, server_addr); //adress defined in Basic.h
+    strcpy(localserver_sock_addr->sun_path, server_addr); //address defined in Basic.h
     if(bind(*localserver_sock, localserver_sock_addr, sizeof(*localserver_sock_addr)) < 0)
     {
         perror("Error binding socket\n");
@@ -68,6 +144,27 @@ int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * local
     }
 
     return 0;
+}
+
+int accept_connection_timeout(int * socket_af_stream)
+{
+    struct timeval tmout;
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(*socket_af_stream, &rfds);
+    int client_sock=-1;
+
+    tmout.tv_sec = (long)timeout;
+    tmout.tv_usec = 0;
+
+    if(select(*socket_af_stream+1, &rfds, (fd_set *) 0, (fd_set *) 0, &tmout)>0)
+        client_sock = accept(*socket_af_stream,NULL,NULL);
+    
+    if(client_sock<0)
+    {
+        return -1;
+    }
+    return client_sock;
 }
 
 
@@ -88,7 +185,7 @@ void acceptConnections(void *arg)
     //To fix later
     pthread_t ptid;
 
-    //Waiting for connection cycle
+    
     client_sock=0;
     if(listen(kvs_localserver_sock,max_waiting_connections)<0)
     {
@@ -96,17 +193,18 @@ void acceptConnections(void *arg)
         pthread_exit((void *)-3);
     }
 
-    client_sock = accept(kvs_localserver_sock,NULL,NULL);
-    if(client_sock<0)
+    //Connection cycle
+    while(server_status)
     {
-        perror("Error connecting");
-        pthread_exit((void *)-4);
-    }
-
-    if(pthread_create(&ptid,NULL,(void *)&handleConnection,(void *)&client_sock)<0)
-    {
-        perror("Error creating thread");
-        pthread_exit((void *)-6);
+        client_sock = accept_connection_timeout(&(kvs_localserver_sock));
+        if(client_sock != -1)
+        {
+            if(pthread_create(&ptid,NULL,(void *)&handleConnection,(void *)&client_sock)<0)
+            {
+                perror("Error creating thread");
+                pthread_exit((void *)-6);
+            }
+        }
     }
 
     pthread_join(ptid,NULL);

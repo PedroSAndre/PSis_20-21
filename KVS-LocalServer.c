@@ -90,6 +90,7 @@ int main(void)
         }
         else if(selector==2)
         {
+            // Delete also on auth-server
             printf("Insert the group ID to delete: ");
             fgets(input_string, group_id_max_size, stdin);
             if(hashDelete_group_table(groups, input_string) == 0){
@@ -110,7 +111,6 @@ int main(void)
                     //printf("Client_pid: %d, ", );
                 }
             }
-
         }
     }
 
@@ -223,6 +223,8 @@ void handleConnection(void *arg)
     secret = malloc(1024*sizeof(char));
 
     client_sock = *((int *)arg);
+
+    //Ask authentication
 
     read(client_sock,&client_PID,sizeof(client_PID));
     read(client_sock,group_id,(1024*sizeof(char)));

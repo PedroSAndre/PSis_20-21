@@ -11,6 +11,7 @@
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <time.h>
+#include <pthread.h>
 
 //Address defenition
 #define server_addr "sockets/localserver"

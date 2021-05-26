@@ -1,8 +1,6 @@
 #include "Basic.h"
 #include "key_value_struct.h"
 
-#include <pthread.h>
-
 struct app_status
 {
     pthread_t process_ptid;
@@ -11,10 +9,18 @@ struct app_status
     time_t close_time;
 };
 
+struct message{
+    int request;
+    char * group;
+    char * secret;
+    struct message * next;
+};
+
 //Declaration of functions writen in the end
 int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr);
 void acceptConnections(void *arg);
 void handleConnection(void *arg);
+void handleAuthCom(void *arg);
 struct app_status * inicialize_app_status(void);
 int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid);
 int close_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid);
@@ -26,6 +32,7 @@ int clients_connected;
 struct group_table * groups; //hash table with all groups
 struct app_status * state; //struct with all clients and their time information
 int auth_socket;
+struct message * Main=NULL;
 
 int main(void)
 {
@@ -225,13 +232,11 @@ void print_status(struct app_status * dummy)
     {
         tm_info = localtime(&(dummy[i].connection_time));
         strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
-        puts(buffer);
         printf("Client pid: %d; Connection time: %s;", dummy[i].client_ptid, buffer);
         if(dummy[i].close_time != -1)
         {
             tm_info = localtime(&(dummy[i].close_time));
             strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
-            puts(buffer);
             printf(" Close time: %s;", buffer);
         }
         printf("\n");
@@ -246,22 +251,20 @@ void acceptConnections(void *arg)
     int kvs_localserver_sock;
     int client_sock;
     struct sockaddr_un kvs_localserver_sock_addr;
+    pthread_t temp_PID;
 
     aux = createAndBindServerSocket(&kvs_localserver_sock, &kvs_localserver_sock_addr);
     if(aux<0)
     {
-        pthread_exit((void *)&aux);
+        pthread_exit(NULL);
     }
-
-    //To fix later
-    pthread_t ptid;
 
     
     client_sock=0;
     if(listen(kvs_localserver_sock,max_waiting_connections)<0)
     {
         perror("Error listening for connections\n");
-        pthread_exit((void *)-3);
+        pthread_exit(NULL);
     }
 
     //Connection cycle
@@ -270,16 +273,16 @@ void acceptConnections(void *arg)
         client_sock = accept_connection_timeout(&(kvs_localserver_sock));
         if(client_sock != -1)
         {
-            if(pthread_create(&ptid,NULL,(void *)&handleConnection,(void *)&client_sock)<0)
+            if(pthread_create(&temp_PID,NULL,(void *)&handleConnection,(void *)&client_sock)<0)
             {
                 perror("Error creating thread");
-                pthread_exit((void *)-6);
+                pthread_exit(NULL);
             }
         }
     }
 
-    pthread_join(ptid,NULL);
-    pthread_exit((void *)0);
+    //pthread_join(ptid,NULL);
+    pthread_exit(NULL);
 }
 
 void handleConnection(void *arg)
@@ -287,6 +290,7 @@ void handleConnection(void *arg)
     int client_sock;
     int answer;
     int client_PID;
+    pthread_t local_PID;
 
     char * group_id;
     char * secret;
@@ -294,6 +298,8 @@ void handleConnection(void *arg)
     secret = malloc(1024*sizeof(char));
 
     client_sock = *((int *)arg);
+
+    local_PID = pthread_self();
 
     //Ask authentication
 
@@ -303,6 +309,8 @@ void handleConnection(void *arg)
     printf("Client_PID: %d\n", client_PID);
     printf("Group_ID: %s\n", group_id);
     printf("Secret: %s\n", secret);
+
+    add_status(state, local_PID, client_PID);
 
     answer=1;
     write(client_sock,&answer,sizeof(answer));
@@ -314,4 +322,37 @@ void handleConnection(void *arg)
     }
 
     pthread_exit((void *)0);
+}
+
+
+//Functions used to simplify code
+int createAndBindAuthSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr)
+{
+    //To make sure the address is free
+    remove(server_addr);
+    //Creating socket
+    *localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(*localserver_sock==-1){
+        perror("Error creating main local server socket\n");
+        return -1;
+    }
+
+    //Binding address
+    memset(localserver_sock_addr,0,sizeof(struct sockaddr_un));
+    localserver_sock_addr->sun_family=AF_UNIX;
+    strcpy(localserver_sock_addr->sun_path, server_addr); //address defined in Basic.h
+    if(bind(*localserver_sock, localserver_sock_addr, sizeof(*localserver_sock_addr)) < 0)
+    {
+        perror("Error binding socket\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+void handleAuthCom(void *arg){
+
+
+    
+
 }

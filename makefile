@@ -1,5 +1,5 @@
 KVS-lib.o: KVS-lib.h Basic.h KVS-lib.c
-	gcc -c KVS-lib.c
+	gcc -pthread -c KVS-lib.c
 
 TestApp.o: KVS-lib.h Basic.h TestApp.c
 	gcc -pthread -c TestApp.c
@@ -19,7 +19,7 @@ KVS-AuthServer.o: Basic.h Authserver.h KVS-AuthServer.c
 
 
 App: Basic.h KVS-lib.o TestApp.o
-	gcc KVS-lib.o TestApp.o -o TestApp.out
+	gcc -pthread KVS-lib.o TestApp.o -o TestApp.out
 
 Server: Basic.h key_value_struct.h key_value_struct.o KVS-LocalServer.o
 	gcc -pthread key_value_struct.o KVS-LocalServer.o -o KVS-LocalServer.out

@@ -179,7 +179,7 @@ int register_callback(char * key, void (*callback_function)(char *)){
         perror("write(key)  error");
         return -1;
     }
-    if(recv(client_sock, &answer,sizeof(int)) ==-1){
+    if(read(client_sock, &answer,sizeof(int)) ==-1){
         perror("No answer from local server");
         return -2;
     }

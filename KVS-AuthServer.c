@@ -4,7 +4,7 @@
 
 
 
-int main(void)
+int main(int argc, void * arg)
 {
     int u;
     int answer;
@@ -16,11 +16,19 @@ int main(void)
 
     struct Message * Current, * Main=NULL;
 
+    
+
 
 
     char * group=malloc(1024*sizeof(char));
     char * secret;
     char * buf;
+
+    if(argc==1){
+
+    }else{
+
+    }
     
 
     buf = malloc(1024*sizeof(char));
@@ -36,7 +44,7 @@ int main(void)
     memset(&kvs_authserver_sock_addr,0,sizeof(struct sockaddr_in));
     kvs_authserver_sock_addr.sin_family=AF_INET;
     kvs_authserver_sock_addr.sin_port=htons(8000);
-    kvs_authserver_sock_addr.sin_addr.s_addr=INADDR_ANY;
+    kvs_authserver_sock_addr.sin_addr.s_addr=;
     if(bind(kvs_authserver_sock,(struct sockaddr*) &kvs_authserver_sock_addr, sizeof(struct sockaddr_in)) < 0)
     {
         perror("Error binding socket\n");

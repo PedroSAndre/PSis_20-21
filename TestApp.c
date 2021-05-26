@@ -2,7 +2,10 @@
 #include "KVS-lib.h"
 
 
-
+void f(char * key){
+    printf("The key with name %s was changed\n", key);
+    pthread_exit(0);
+}
 
 
 int main()

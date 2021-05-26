@@ -168,6 +168,29 @@ int delete_value(char * key)
     return 1;
 }
 
+int register_callback(char * key, void (*callback_function)(char *)){
+    int answer=CALL;
+    pthread_t thread_id;
+    if(write(client_sock,&answer,sizeof(int))==-1){
+        perror("write(flag:CALL)  error");
+        return -1;
+    }
+    if(write(client_sock,key, key_max_size* sizeof(char))==-1){
+        perror("write(key)  error");
+        return -1;
+    }
+    if(recv(client_sock, &answer,sizeof(int)) ==-1){
+        perror("No answer from local server");
+        return -2;
+    }
+    if(pthread_create(&thread_id,NULL,(void *)&callback_function,(void *)key)<0)
+    {
+        perror("Error creating thread");
+        return -3;
+    }
+    return 1;
+}
+
 int close_connection()
 {
     int buf=CLS;

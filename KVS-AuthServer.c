@@ -1,109 +1,8 @@
 #include "Basic.h"
-#include "Auth_group_secret.h"
-#include <arpa/inet.h>
-
-
-#define SIZE 101
+#include "Authserver.h"
 
 
 
-struct Message{
-    struct sockaddr_in clientaddr;
-    int request;
-    char * group;
-    char * secret;
-    struct Message * next;
-};
-
-
-struct HashGroup * Table[SIZE];
-
-
-struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main){
-    int request=0,aux;
-    char * group;
-    char * secret;
-    struct Message * Current, * Previous;
-
-
-    Previous=NULL;
-    Current=*Main;
-    if(Current==NULL)
-    {
-        group=malloc(sizeof(char)*group_id_max_size);
-        aux=sscanf(buf,"%d:%s",&request,group);
-        if(aux!=2){
-            return NULL;
-        }
-        Current=malloc(sizeof(struct Message));
-        Current->clientaddr=kvs_localserver_sock_addr;
-        Current->request=request;
-        Current->group=malloc(1024*sizeof(char));
-        strcpy(Current->group,group);
-        if(request==PUT || request==CMP || request==DEL){
-            *Main=Current;
-            secret=malloc(sizeof(char)*secret_max_size);
-            if(secret==NULL){
-                perror("Error alocating memory");
-                return NULL;
-            }
-            strcpy(secret,"\0");
-            Current->secret=secret;
-        }
-    }else{
-        
-
-        while((Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr) && Current->next !=NULL){
-            Previous=Current;
-            Current=Current->next;
-        }
-
-        if(Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr){
-            sscanf(buf,"%d:%s",&request,group);
-            if(aux!=2){
-                return NULL;
-            }
-            Current=malloc(sizeof(struct Message));
-            Current->clientaddr=kvs_localserver_sock_addr;
-            Current->group=malloc(1024*sizeof(char));
-            strcpy(Current->group,group);
-            Current->request=request;
-                if(request==PUT || request==CMP || request==DEL){
-                    secret=malloc(sizeof(char)*secret_max_size);
-                if(secret==NULL){
-                    perror("Error alocating memory");
-                    return NULL;
-                }
-                strcpy(secret,"\0");
-                Current->secret=secret;
-                Previous=Current;
-                Previous->next=Current;
-            }
-        }else{     
-            strcpy(Current->secret,buf);
-        }
-    }
-    return Current;
-}
-
-struct Message * deleteMessage(struct Message * Current, struct Message * Main){
-    struct Message * Previous;
-    if(Current==Main){
-        free(Current->group);
-        free(Current->secret);
-        free(Current);
-        return NULL;
-    }
-    Previous=Main;
-    while(Previous->next!=Current){
-        Previous=Previous->next;
-    }
-    free(Current->group);
-    free(Current->secret);
-    Previous->next=Current->next;
-    free(Current);
-    return Main;
-}
 
 int main(void)
 {
@@ -170,6 +69,7 @@ int main(void)
                 Current->request=WAIT;
                 answer=-1;
             }
+            //Create/update a group-secret pair
             if (Current->request==PUT){
                 if(strcmp(Current->secret,"\0")!=0){
                     if(CreateUpdateEntry(Current->group,Current->secret)==1){
@@ -199,6 +99,7 @@ int main(void)
                 }else{
                     answer=1;
                 } 
+            //Compare values
             }else if(Current->request==CMP){
                 if(strcmp(Current->secret,"\0")!=0){
                     answer=compareHashGroup(Current->group,Current->secret);

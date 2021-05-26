@@ -15,12 +15,17 @@ struct app_status
 int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr);
 void acceptConnections(void *arg);
 void handleConnection(void *arg);
+struct app_status * inicialize_app_status(void);
+int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid);
+int close_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid);
+void print_status(struct app_status * dummy);
 
 //Global variables (to be shared across all server threads)
 int server_status = 1; //1 -> ON; 0 -> OFF 
 int clients_connected;
 struct group_table * groups; //hash table with all groups
-struct app_status * clients; //struct with all clients and their time information
+struct app_status * state; //struct with all clients and their time information
+int auth_socket;
 
 int main(void)
 {
@@ -32,11 +37,12 @@ int main(void)
     pthread_t acepting_connections_thread_ptid;
     struct key_value * aux_key_value;
 
-
-    //Inicialization of client struct
-    clients = malloc(sizeof(struct app_status));
-    clients[0].process_ptid = getpid();
-    time(&(clients[0].connection_time));
+    state = inicialize_app_status();
+    if(state == NULL)
+    {
+        printf("Error inicializing app_status");
+        return -1;
+    }
     clients_connected = 0;
 
     groups = hashCreateInicialize_group_table();
@@ -54,6 +60,7 @@ int main(void)
     }
 
     printf("*****Welcome to KVS Local Server*****\n");
+
     //Main control cycle
     while(cycle_status)
     {
@@ -106,10 +113,11 @@ int main(void)
         {
             if(clients_connected>0)
             {
-                for(int i=1;i<clients_connected;i++)
-                {
-                    //printf("Client_pid: %d, ", );
-                }
+                print_status(state);
+            }
+            else
+            {
+                printf("No clients connected yet\n\n");
             }
         }
     }
@@ -140,11 +148,12 @@ int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * local
     if(bind(*localserver_sock, localserver_sock_addr, sizeof(*localserver_sock_addr)) < 0)
     {
         perror("Error binding socket\n");
-        return -2;
+        return -1;
     }
 
     return 0;
 }
+
 
 int accept_connection_timeout(int * socket_af_stream)
 {
@@ -167,6 +176,68 @@ int accept_connection_timeout(int * socket_af_stream)
     return client_sock;
 }
 
+//struct app_status functions
+
+struct app_status * inicialize_app_status(void)
+{
+    //Creates an instance with the information from main
+    struct app_status * dummy;
+    dummy = malloc(sizeof(struct app_status));
+    if(dummy == NULL)
+        return NULL;
+    dummy[0].process_ptid = getpid();
+    dummy[0].client_ptid = -1;
+    dummy[0].connection_time = time(NULL);
+    dummy[0].close_time = -1;
+    return dummy;
+}
+
+int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid)
+{
+    dummy = realloc(dummy,(clients_connected+2)*sizeof(struct app_status));
+    if(dummy == NULL)
+        return -1;
+    clients_connected = clients_connected+1;
+    dummy[clients_connected].client_ptid = client_ptid;
+    dummy[clients_connected].process_ptid = process_ptid;
+    dummy[clients_connected].close_time = -1;
+    return 0;
+}
+
+int close_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid)
+{
+    for(int i = 1;i<=clients_connected;i++)
+    {
+        if(dummy[i].client_ptid == client_ptid && dummy[i].process_ptid == process_ptid && dummy[i].close_time == -1)
+        {
+            dummy[i].close_time = time(NULL);
+            return 0;
+        }
+    }
+    return -1;
+}
+
+void print_status(struct app_status * dummy)
+{
+    struct tm* tm_info;
+    char buffer[26];
+    for(int i = 1;i<=clients_connected;i++)
+    {
+        tm_info = localtime(&(dummy[i].connection_time));
+        strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+        puts(buffer);
+        printf("Client pid: %d; Connection time: %s;", dummy[i].client_ptid, buffer);
+        if(dummy[i].close_time != -1)
+        {
+            tm_info = localtime(&(dummy[i].close_time));
+            strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+            puts(buffer);
+            printf(" Close time: %s;", buffer);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
 
 //Thread functions
 void acceptConnections(void *arg)

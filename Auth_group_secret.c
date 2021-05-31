@@ -45,7 +45,6 @@ int CreateUpdateEntry(char * group,char *secret){
     while(Current!=NULL){
 
         if(strcmp(Current->group,group)==0){
-            strcpy(Current->secret,secret);
             return 1;
         }
         if(Current->next==NULL){
@@ -238,3 +237,5 @@ struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     free(Current);
     return Main;
 }
+
+

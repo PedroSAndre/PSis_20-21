@@ -42,19 +42,6 @@ int main(int argc, char**argv){
     Authserver_sock_addr->sin_port=port;
     Authserver_sock_addr->sin_addr.s_addr = inet_addr(argv[1]);
 
-    scanf("%s",buf);
-    printf("My Message: %s\n",buf);
-    while(strcmp(buf,"END")!=0){
-        sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)Authserver_sock_addr ,len);
-
-        recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)Authserver_sock_addr ,&len);
-        printf("Answer: %d\n",answer);
-
-        scanf("%s",buf);   
-        printf("My Message: %s\n",buf);
-
-    }
-
     while(1){
         while(Main!=NULL){
             sprintf(buf,"%d:%s",Main->request,Main->group);

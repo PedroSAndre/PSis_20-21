@@ -1,6 +1,8 @@
 #include "Basic.h"
 #include "KVS-lib.h"
 
+#include <pthread.h>
+
 
 int client_sock;
 
@@ -186,6 +188,7 @@ int close_connection()
 
 int register_callback(char * key, void (*callback_function)(char *)){
     int buf=CMP;
+    pthread_t callback_thread;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
         perror("write(flag:CMP)  error");
@@ -196,6 +199,19 @@ int register_callback(char * key, void (*callback_function)(char *)){
         perror("write(key)  error");
         return -2;
     }
+
+    if(read(client_sock,&buf,sizeof(int))==-1)
+    {
+        perror("No answer from local server");
+        return -4;
+    }
+
+    if(pthread_create(&callback_thread,NULL,callback_function,(void * )key)<0)
+    {
+        perror("Error creating thread");
+        return -3;
+    }
+
     return 1;
 
 }

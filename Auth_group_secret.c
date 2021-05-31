@@ -43,7 +43,6 @@ int CreateUpdateEntry(char * group,char *secret){
     }
 
     while(Current!=NULL){
-
         if(strcmp(Current->group,group)==0){
             return 1;
         }
@@ -236,6 +235,23 @@ struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     Previous->next=Current->next;
     free(Current);
     return Main;
+}
+
+char * generate_secret(){
+    char * secret=malloc(key_max_size*sizeof(char));
+    if(secret==NULL){
+        perror("Error alocating memory");
+        return NULL;
+    }
+
+
+    for(int i=0;i<key_max_size-1;i++){
+        secret[i]= 32 + rand() % nASCII;
+    }
+    secret[key_max_size-1]='\0';
+
+    return secret;
+
 }
 
 

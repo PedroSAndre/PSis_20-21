@@ -2,6 +2,7 @@
 #define _Auth_group_secret_
 
 #define SIZE 101
+#define nASCII 95
 
 struct HashGroup {
     char group[group_id_max_size];
@@ -40,6 +41,8 @@ int compareHashGroup(char * group, char * checksecret);
 struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main);
 
 struct Message * deleteMessage(struct Message * Current, struct Message * Main);
+
+char * generate_secret();
 
 
 

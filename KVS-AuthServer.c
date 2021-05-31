@@ -82,15 +82,19 @@ int main(int argc, char**argv)
             }
             if (Current->request==PUT){
                 secret=generate_secret();
+                if(secret==NULL){
+                    
+                }
                 strcpy(Current->secret,secret);
                 if(CreateUpdateEntry(Current->group,Current->secret)==1){
 
                     sendto(kvs_authserver_sock,secret,sizeof(secret),0,(struct sockaddr * )&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
 
                     Main=deleteMessage(Current,Main);
-                    answer=1;
+                    answer=PUT;
                 }else{
-                    answer=-1;
+
+                    answer=PUT;
                 }
             //Get secret
             }else if(Current->request==GET){
@@ -122,7 +126,7 @@ int main(int argc, char**argv)
         }
 
         
-        if(answer!=GET){
+        if(answer!=GET && answer!=PUT){
             sendto(kvs_authserver_sock,&answer,sizeof(int),0,(struct sockaddr *)&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
             printf("Answer:%d\n",answer);
         }   

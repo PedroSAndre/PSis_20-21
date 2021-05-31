@@ -45,14 +45,21 @@ int main(int argc, char**argv){
     while(1){
         while(Main!=NULL){
             sprintf(buf,"%d:%s",Main->request,Main->group);
-            sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)Authserver_sock_addr ,len);
+            while(sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)Authserver_sock_addr ,len)){
 
-            if(Main->request==GET){
-                recvfrom(Authserver_sock,buf,sizeof(buf),0,(struct sockaddr*)Authserver_sock_addr ,&len);
+            }
+
+            if(Main->request==GET || Main->request==PUT){
+
+                while(recvfrom(Authserver_sock,buf,sizeof(buf),0,(struct sockaddr*)Authserver_sock_addr ,&len)){
+                    
+                }
+
+
                 strcpy(Main->secret,buf);
             }else{
                 recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)Authserver_sock_addr ,&len);
-                if(Main->request==DEL || Main->request==PUT || Main->request==CMP){
+                if(Main->request==DEL || Main->request==CMP){
                     strcpy(buf,Main->secret);
                     sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)Authserver_sock_addr ,len);
                     recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)Authserver_sock_addr ,&len);

@@ -183,3 +183,19 @@ int close_connection()
     }
     return 1;
 }
+
+int register_callback(char * key, void (*callback_function)(char *)){
+    int buf=CMP;
+
+    if(write(client_sock,&buf,sizeof(buf))==-1){
+        perror("write(flag:CMP)  error");
+        return -1;
+    }
+
+    if(write(client_sock,key,key_max_size*sizeof(char))==-1){
+        perror("write(key)  error");
+        return -2;
+    }
+    return 1;
+
+}

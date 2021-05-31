@@ -9,6 +9,15 @@ struct HashGroup {
     struct HashGroup * next;
 };
 
+struct Message{
+    struct sockaddr_in clientaddr;
+    int request;
+    char * group;
+    char * secret;
+    struct Message * next;
+};
+
+
 struct HashGroup * Table[SIZE];
 
 //Hash function for group hash table
@@ -26,5 +35,12 @@ char * getGroupSecret(char * group);
 
 //Check if the secret matches the one saved in Auth server. Authentication function
 int compareHashGroup(char * group, char * checksecret);
+
+
+struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main);
+
+struct Message * deleteMessage(struct Message * Current, struct Message * Main);
+
+
 
 #endif

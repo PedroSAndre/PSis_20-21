@@ -1,6 +1,13 @@
 #include "Basic.h"
 #include "Auth_group_secret.h"
 
+#define SIZE 101
+
+
+
+
+
+
 
 int HashIndex(char * group){
     int i=0;
@@ -15,6 +22,7 @@ int HashIndex(char * group){
 int CreateUpdateEntry(char * group,char *secret){
     int TableIndex=HashIndex(group);
     struct HashGroup * Current,* Previous;
+
     
     struct HashGroup * Novo;
 
@@ -71,8 +79,6 @@ int DeleteEntry(char * group, char * secret){
     if(strcmp(Current->group,group)==0){
         if(strcmp(Current->secret,secret)==0){
             Table[TableIndex]=Current->next;
-            free(Current->group);
-            free(Current->secret);
             free(Current);
             return 1;
         }else{
@@ -89,8 +95,6 @@ int DeleteEntry(char * group, char * secret){
             if(strcmp(Current->secret,secret)==0){
                 if(Current->secret==secret){
                     Previous->next=Current->next;
-                    free(Current->group);
-                    free(Current->secret);
                     free(Current);
                     return 1; 
                 }else{
@@ -144,4 +148,93 @@ int compareHashGroup(char * group, char * checksecret){
         return -1;
     }
     
+}
+
+
+
+
+struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main){
+    int request=0,aux;
+    char * group;
+    char * secret;
+    struct Message * Current, * Previous;
+
+
+    Previous=NULL;
+    Current=*Main;
+    if(Current==NULL)
+    {
+        group=malloc(sizeof(char)*group_id_max_size);
+        aux=sscanf(buf,"%d:%s",&request,group);
+        if(aux!=2){
+            return NULL;
+        }
+        Current=malloc(sizeof(struct Message));
+        Current->clientaddr=kvs_localserver_sock_addr;
+        Current->request=request;
+        Current->group=malloc(1024*sizeof(char));
+        strcpy(Current->group,group);
+        if(request==PUT || request==CMP || request==DEL){
+            *Main=Current;
+            secret=malloc(sizeof(char)*secret_max_size);
+            if(secret==NULL){
+                perror("Error alocating memory");
+                return NULL;
+            }
+            strcpy(secret,"\0");
+            Current->secret=secret;
+        }
+    }else{
+        
+
+        while((Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr || Current->clientaddr.sin_port!=kvs_localserver_sock_addr.sin_port) && Current->next !=NULL){
+            Previous=Current;
+            Current=Current->next;
+        }
+
+        if(Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr || Current->clientaddr.sin_port!=kvs_localserver_sock_addr.sin_port){
+            sscanf(buf,"%d:%s",&request,group);
+            if(aux!=2){
+                return NULL;
+            }
+            Current=malloc(sizeof(struct Message));
+            Current->clientaddr=kvs_localserver_sock_addr;
+            Current->group=malloc(1024*sizeof(char));
+            strcpy(Current->group,group);
+            Current->request=request;
+                if(request==PUT || request==CMP || request==DEL){
+                    secret=malloc(sizeof(char)*secret_max_size);
+                if(secret==NULL){
+                    perror("Error alocating memory");
+                    return NULL;
+                }
+                strcpy(secret,"\0");
+                Current->secret=secret;
+                Previous=Current;
+                Previous->next=Current;
+            }
+        }else{     
+            strcpy(Current->secret,buf);
+        }
+    }
+    return Current;
+}
+
+struct Message * deleteMessage(struct Message * Current, struct Message * Main){
+    struct Message * Previous;
+    if(Current==Main){
+        free(Current->group);
+        free(Current->secret);
+        free(Current);
+        return NULL;
+    }
+    Previous=Main;
+    while(Previous->next!=Current){
+        Previous=Previous->next;
+    }
+    free(Current->group);
+    free(Current->secret);
+    Previous->next=Current->next;
+    free(Current);
+    return Main;
 }

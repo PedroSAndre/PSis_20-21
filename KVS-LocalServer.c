@@ -11,10 +11,23 @@ struct app_status
     time_t close_time;
 };
 
+struct message
+{
+int answer;
+char * group;
+char * secret;
+int request;
+struct message * next;
+};
+
+struct message * Main=NULL;
+
 //Declaration of functions writen in the end
 int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr);
 void acceptConnections(void *arg);
 void handleConnection(void *arg);
+
+void AuthServerCom(void * arg);
 
 //Global variables (to be shared across all server threads)
 int server_status = 1; //1 -> ON; 0 -> OFF 
@@ -243,4 +256,32 @@ void handleConnection(void *arg)
     }
 
     pthread_exit((void *)0);
+}
+
+
+void AuthServerCom(void * arg){
+    int localserver_sock;
+    struct sockaddr_un * localserver_sock_addr;
+
+    //To make sure the address is free
+    remove(server_addr);
+    //Creating socket
+    localserver_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if(localserver_sock==-1){
+        perror("Error creating main local server socket\n");
+        return -1;
+    }
+
+    //Binding address
+    memset(localserver_sock_addr,0,sizeof(struct sockaddr_un));
+    localserver_sock_addr->sun_family=AF_INET;
+    strcpy(localserver_sock_addr->sun_path,  ); //address defined in Basic.h
+    if(bind(localserver_sock, localserver_sock_addr, sizeof(*localserver_sock_addr)) < 0)
+    {
+        perror("Error binding socket\n");
+        return -2;
+    }
+
+
+
 }

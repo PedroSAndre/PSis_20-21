@@ -1,5 +1,6 @@
 #include "Basic.h"
 #include "key_value_struct.h"
+#include "group_table_struct.h"
 
 struct app_status
 {

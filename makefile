@@ -6,6 +6,9 @@ key_value_struct.o: Basic.h key_value_struct.h key_value_struct.c
 group_table_struct.o: Basic.h group_table_struct.h group_table_struct.c
 	gcc -c group_table_struct.c
 
+app_status_struct.o: Basic.h app_status_struct.h app_status_struct.c
+	gcc -c app_status_struct.c
+
 
 #Main files
 KVS-lib.o: KVS-lib.h Basic.h KVS-lib.c
@@ -29,8 +32,8 @@ KVS-AuthServer.o: Basic.h Authserver.h KVS-AuthServer.c
 App: KVS-lib.o TestApp.o
 	gcc -pthread KVS-lib.o TestApp.o -o TestApp.out
 
-LocalServer: key_value_struct.o group_table_struct.o KVS-LocalServer.o
-	gcc -pthread key_value_struct.o group_table_struct.o KVS-LocalServer.o -o KVS-LocalServer.out
+LocalServer: key_value_struct.o group_table_struct.o app_status_struct.o KVS-LocalServer.o
+	gcc -pthread key_value_struct.o group_table_struct.o app_status_struct.o KVS-LocalServer.o -o KVS-LocalServer.out
 
 AuthServer: Auth_group_secret.o KVS-AuthServer.o
 	gcc KVS-AuthServer.o Authserver.o -o KVS-AuthServer.out

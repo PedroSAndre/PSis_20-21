@@ -34,7 +34,7 @@ int CreateUpdateEntry(char * group,char *secret);
 
 //Deletes an entry in hash function. It requires the secret to make sure that the 
 //entry can be deleted by the one requesting the delete
-int DeleteEntry(char * group, char * secret);
+int DeleteEntry(char * group);
 
 //Request the group secret
 char * getGroupSecret(char * group);

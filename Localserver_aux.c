@@ -96,7 +96,7 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
         answer=1;
     }else{
         recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
-        if(request==DEL  || request==CMP){
+        if(request==CMP){
 
 
             strcpy(buf,secret);

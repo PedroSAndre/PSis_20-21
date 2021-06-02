@@ -104,18 +104,35 @@ int main(int argc, char ** argv)
         }
         else if(selector==2)
         {
-            // Delete also on auth-server
-            //CONFLICT HERE
-            printf("Insert the group ID to delete: ");
+            printf("Delete the group with ID: ");
             fgets(input_string, group_id_max_size, stdin);
-            if(hashDelete_group_table(groups, input_string) == 0)
-                printf("Group deleted with sucess\n\n");
-            else
-                printf("Error deleting selected group\n\n");
+            aux=AuthServerCom(DEL,input_string,secret,Authserver_sock,Authserver_sock_addr);
+            if(aux==0 ){
+                printf("No response from Auth server\n");
+            }else if(aux==1){
+                    //CONFLICT HERE
+                    if(hashDelete_group_table(groups, input_string) == 0)
+                        printf("Group deleted with sucess\n\n");
+                    else
+                        printf("Error deleting selected group\n\n");
+                
+            }else{
+                printf("Something went wrong in the Auth Server\n");
+            }
         }
         else if(selector == 3)
         {
-            //easy to implment
+            printf("Get info of group ID: ");
+            fgets(input_string, group_id_max_size, stdin);
+            aux=AuthServerCom(GET,input_string,secret,Authserver_sock,Authserver_sock_addr);
+            if(aux==0){
+                printf("No response from Auth server\n");
+            }else if(aux==1){
+                
+                
+            }else{
+                printf("Something went wrong in the Auth Server\n");
+            }
         }
         else if(selector == 4)
         {
@@ -204,6 +221,7 @@ void handleConnection(void *arg)
     read(client_sock,&client_PID,sizeof(client_PID));
     read(client_sock,group_id,(group_id_max_size*sizeof(char)));
     read(client_sock,secret,(secret_max_size*sizeof(char)));
+
 
     //CONFLICT HERE
     local_key_value_table = hashGet_group_table(groups, group_id);

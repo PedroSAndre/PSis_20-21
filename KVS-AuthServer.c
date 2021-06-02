@@ -66,13 +66,11 @@ int main(int argc, char**argv)
     while(1){
         answer=0;
 
-
         if(recvfrom(kvs_authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr *)&kvs_localserver_sock_addr,&len)<0)
         {
             perror("Error receving connection\n");
             return -3;
         }
-
         printf("Received: %s\n",buf);
         
 
@@ -113,12 +111,8 @@ int main(int argc, char**argv)
                 answer=GET;
             //Delete entry for group
             }else if(Current->request==DEL){
-                if(strcmp(Current->secret,"\0")!=0){
-                    answer=DeleteEntry(Current->group,Current->secret);
-                    Main=deleteMessage(Current,Main);
-                }else{
-                    answer=1;
-                } 
+                answer=DeleteEntry(Current->group);
+                Main=deleteMessage(Current,Main);
             }else if(Current->request==CMP){
                 if(strcmp(Current->secret,"\0")!=0){
                     answer=compareHashGroup(Current->group,Current->secret);

@@ -61,7 +61,7 @@ int CreateUpdateEntry(char * group,char *secret){
 
 }
 
-int DeleteEntry(char * group, char * secret){
+int DeleteEntry(char * group){
     int TableIndex=HashIndex(group);
     struct HashGroup * Current,* Previous;
     
@@ -72,14 +72,9 @@ int DeleteEntry(char * group, char * secret){
     }
 
     if(strcmp(Current->group,group)==0){
-        if(strcmp(Current->secret,secret)==0){
-            Table[TableIndex]=Current->next;
-            free(Current);
-            return 1;
-        }else{
-            perror("Delete request denied");
-            return -1;
-        }
+        Table[TableIndex]=Current->next;
+        free(Current);
+        return 1;
     }
     Previous=Current;
     Current=Current->next;
@@ -87,16 +82,9 @@ int DeleteEntry(char * group, char * secret){
     while(Current!=NULL){
 
         if(strcmp(Current->group,group)==0){
-            if(strcmp(Current->secret,secret)==0){
-                if(Current->secret==secret){
-                    Previous->next=Current->next;
-                    free(Current);
-                    return 1; 
-                }else{
-                    perror("Delete request denied");
-                    return -1;
-                }
-            }
+            Previous->next=Current->next;
+            free(Current);
+            return 1; 
         }
         Previous=Current;
         Current=Current->next;

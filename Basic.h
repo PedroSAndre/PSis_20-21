@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <time.h>
 #include <pthread.h>
 
@@ -19,7 +20,7 @@
 
 //Constant definition
 #define max_waiting_connections 10
-#define timeout 5
+#define timeout 5 //seconds
 #define input_string_max_size 1024 //needs to be qual or bigger than all other string sizes
 #define key_max_size 512
 #define group_id_max_size 1024

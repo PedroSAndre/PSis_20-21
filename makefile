@@ -17,6 +17,9 @@ KVS-lib.o: KVS-lib.h Basic.h KVS-lib.c
 TestApp.o: KVS-lib.h Basic.h TestApp.c
 	gcc -g -pthread -c TestApp.c
 
+Localserver_aux.o: Basic.h Localserver_aux.h Localserver_aux.c
+	gcc -g -c Localserver_aux.c
+
 KVS-LocalServer.o: Basic.h key_value_struct.h group_table_struct.h KVS-LocalServer.c
 	gcc -g -pthread -c KVS-LocalServer.c
 
@@ -32,8 +35,8 @@ KVS-AuthServer.o: Basic.h Authserver.h KVS-AuthServer.c
 App: KVS-lib.o TestApp.o
 	gcc -g -pthread KVS-lib.o TestApp.o -o TestApp.out
 
-LocalServer: key_value_struct.o group_table_struct.o app_status_struct.o KVS-LocalServer.o
-	gcc -g -pthread key_value_struct.o group_table_struct.o app_status_struct.o KVS-LocalServer.o -o KVS-LocalServer.out
+LocalServer: key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o KVS-LocalServer.o
+	gcc -g -pthread key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o KVS-LocalServer.o -o KVS-LocalServer.out
 
 AuthServer: Auth_group_secret.o KVS-AuthServer.o
 	gcc -g KVS-AuthServer.o Authserver.o -o KVS-AuthServer.out
@@ -41,4 +44,4 @@ AuthServer: Auth_group_secret.o KVS-AuthServer.o
 
 
 clearall:
-	rm TestApp.out KVS-LocalServer.out TestApp.o KVS-LocalServer.o KVS-lib.o key_value_struct.o group_table_struct.o app_status_struct.o sockets/*
+	rm TestApp.out KVS-LocalServer.out TestApp.o KVS-LocalServer.o KVS-lib.o key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o sockets/*

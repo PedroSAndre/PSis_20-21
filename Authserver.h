@@ -1,17 +1,18 @@
 #ifndef _Authserver_
 #define _Authserver_
 
-#include <arpa/inet.h>
+
 
 #define SIZE 101
+#define nASCII 95
 
 
 //This structure is a list of messages from the various customers
 struct Message{
     struct sockaddr_in clientaddr;
     int request;
-    char * group;
-    char * secret;
+    char group[group_id_max_size];
+    char secret[secret_max_size];
     struct Message * next;
 };
 

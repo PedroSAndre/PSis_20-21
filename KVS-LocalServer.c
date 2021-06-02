@@ -2,49 +2,47 @@
 #include "key_value_struct.h"
 #include "group_table_struct.h"
 #include "app_status_struct.h"
+#include "Localserver_aux.h"
 
-/*struct message{
-    int request;
-    char * group;
-    char * secret;
-    struct message * next;
-};*/
-
-struct message
-{
-    int answer;
-    char group[group_id_max_size];
-    char secret[secret_max_size];
-    int request;
-    struct message * next;
-};
-
-struct message * Main=NULL;
-
-//Declaration of functions writen in the end
-int createAndBind_UNIX_stream_Socket(char * sock_addr);
+//Thread functions
 void acceptConnections(void *arg);
 void handleConnection(void *arg);
 void handleAuthCom(void *arg);
 
 
-void AuthServerCom(char * port_str,char * authaddr_str);
-
 //Global variables (to be shared across all server threads)
 int server_status = 1; //1 -> ON; 0 -> OFF 
 int all_clients_connected = 0;
+
 struct group_table * groups; //hash table with all groups
 struct app_status * state; //struct with all clients and their time information
-int auth_socket;
-//        struct message * Main=NULL;
 
-int main(void)
+int Authserver_sock;
+struct sockaddr_in Authserver_sock_addr;
+
+
+int main(int argc, char ** argv)
 {
+    unsigned short port;
+    struct sockaddr_in * Authserver_sock_addr=malloc(sizeof(struct sockaddr_in));
+    socklen_t len = sizeof (struct sockaddr_in);
+    char * port_str;
+    char * authaddr_str;
+
+
     int selector;
     int aux = 0;
     char input_string[input_string_max_size];
     char input_string2[input_string_max_size];
     pthread_t acepting_connections_thread_ptid;
+
+    if(argc !=3){
+        perror("Incorrect number of arguments");
+        return 0;
+    }
+
+
+    CreateAuthServerSock(argv[1],argv[2],&Authserver_sock,Authserver_sock_addr);
 
     state = inicialize_app_status();
     if(state == NULL)
@@ -88,8 +86,8 @@ int main(void)
             printf("Insert the new group ID: ");
             fgets(input_string, group_id_max_size, stdin);
 
-            //Ask auth-server to create key
-
+            
+            //CONFLICT HERE
             if(hashInsert_group_table(groups, input_string) == 0)
                 printf("Group created with sucess\n\n");
             else
@@ -98,6 +96,7 @@ int main(void)
         else if(selector==2)
         {
             // Delete also on auth-server
+            //CONFLICT HERE
             printf("Insert the group ID to delete: ");
             fgets(input_string, group_id_max_size, stdin);
             if(hashDelete_group_table(groups, input_string) == 0)
@@ -129,57 +128,10 @@ int main(void)
     return 0;
 }
 
-//Functions used to simplify code
 
-//Returns binded socket (-1 if error)
-int createAndBind_UNIX_stream_Socket(char * sock_addr)
-{
-    int sock;
-    struct sockaddr_un struct_sock_addr;
-    //To make sure the address is free
-    remove(server_addr);
-    //Creating socket
-    
-    sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if(sock==-1){
-        perror("Error creating socket\n");
-        return -1;
-    }
 
-    //Binding address
-    memset(&struct_sock_addr,0,sizeof(struct sockaddr_un));
-    struct_sock_addr.sun_family=AF_UNIX;
-    strcpy(struct_sock_addr.sun_path, sock_addr);
-    if(bind(sock, &struct_sock_addr, sizeof(struct_sock_addr)) < 0)
-    {
-        perror("Error binding socket\n");
-        return -1;
-    }
 
-    return sock;
-}
 
-//Accepts connection if timeout is not exeeded
-int accept_connection_timeout(int * socket_af_stream)
-{
-    struct timeval tmout;
-    fd_set rfds;
-    FD_ZERO(&rfds);
-    FD_SET(*socket_af_stream, &rfds);
-    int client_sock=-1;
-
-    tmout.tv_sec = (long)timeout;
-    tmout.tv_usec = 0;
-
-    if(select(*socket_af_stream+1, &rfds, (fd_set *) 0, (fd_set *) 0, &tmout)>0)
-        client_sock = accept(*socket_af_stream,NULL,NULL);
-    
-    if(client_sock<0)
-    {
-        return -1;
-    }
-    return client_sock;
-}
 
 //Thread functions
 void acceptConnections(void *arg)
@@ -244,6 +196,7 @@ void handleConnection(void *arg)
     read(client_sock,group_id,(group_id_max_size*sizeof(char)));
     read(client_sock,secret,(secret_max_size*sizeof(char)));
 
+    //CONFLICT HERE
     local_key_value_table = hashGet_group_table(groups, group_id);
     if(local_key_value_table == NULL)
     {
@@ -253,111 +206,65 @@ void handleConnection(void *arg)
         pthread_exit(NULL);
     }
     
-    //AUTENTICATE HERE
-    answer=1;
+    answer=AuthServerCom(CMP,group_id,secret,Authserver_sock,Authserver_sock_addr);
     write(client_sock,&answer,sizeof(answer));
 
-    if(add_status(state, local_PID, client_PID, &all_clients_connected) == -1)
-        printf("Error updating status");
-    //Connection cycle
-    while(server_status == 1 && cycle)
-    {
-        answer = WAIT;
-        key[0] = '\0';
-        read(client_sock,&answer,sizeof(answer));
-        if(answer == WAIT)
-            continue;
-        else if(answer == PUT)
+    if (answer==1){
+
+        if(add_status(state, local_PID, client_PID, &all_clients_connected) == -1)
+            printf("Error updating status");
+        //Connection cycle
+        while(server_status == 1 && cycle)
         {
-            read(client_sock,key,key_max_size*sizeof(char));
-            read(client_sock,&value_size,sizeof(value_size));
-            value = malloc(value_size*sizeof(char));
-            read(client_sock,value,value_size*sizeof(char));
-            answer = hashInsert_key_value(local_key_value_table,key,value);
-            answer++;
-            write(client_sock,&answer,sizeof(answer));
-            free(value);
-        }
-        else if(answer == GET)
-        {
-            read(client_sock,key,key_max_size*sizeof(char));
-            value = hashGet_key_value(local_key_value_table,key);
-            if(value == NULL)
-                value_size = 0;
-            else
-                value_size = strlen(value);
-            write(client_sock,&value_size,sizeof(value_size));
-            write(client_sock,value,value_size*sizeof(char));
-        }
-        else if(answer == DEL)
-        {
-            read(client_sock,key,key_max_size*sizeof(char));
-            answer = hashDelete_key_value(local_key_value_table,key);
-            answer++; //Updating from one format to another
-            write(client_sock,&answer,sizeof(answer));
+            answer = WAIT;
+            key[0] = '\0';
+            read(client_sock,&answer,sizeof(answer));
+            if(answer == WAIT)
+                continue;
+            else if(answer == PUT)
+            {
+                read(client_sock,key,key_max_size*sizeof(char));
+                read(client_sock,&value_size,sizeof(value_size));
+                value = malloc(value_size*sizeof(char));
+                read(client_sock,value,value_size*sizeof(char));
+                //CONFLICT HERE
+                answer = hashInsert_key_value(local_key_value_table,key,value);
+                answer++;
+                write(client_sock,&answer,sizeof(answer));
+                free(value);
+            }
+            else if(answer == GET)
+            {
+                //CONFLICT HERE
+                read(client_sock,key,key_max_size*sizeof(char));
+                value = hashGet_key_value(local_key_value_table,key);
+                if(value == NULL)
+                    value_size = 0;
+                else
+                    value_size = strlen(value);
+                write(client_sock,&value_size,sizeof(value_size));
+                write(client_sock,value,value_size*sizeof(char));
+            }
+            else if(answer == DEL)
+            {
+                //CONFLICT HERE
+                read(client_sock,key,key_max_size*sizeof(char));
+                answer = hashDelete_key_value(local_key_value_table,key);
+                answer++; //Updating from one format to another
+                write(client_sock,&answer,sizeof(answer));
+            }
+            else if(answer == CLS)
+            {
+                cycle = 0;
+            }
         }
     }
     
     if(close(client_sock)<0)
     {
         perror("Error closing connection");
-        pthread_exit(NULL);
     }
 
 
     pthread_exit(NULL);
-}
-
-
-
-
-void AuthServerCom(char * port_str,char * authaddr_str){
-    int Authserver_sock;
-    unsigned short port;
-    struct sockaddr_in * Authserver_sock_addr=malloc(sizeof(struct sockaddr_in));
-    socklen_t len = sizeof (struct sockaddr_in);
-    char * buf=malloc(1050*sizeof(char));
-    int answer;
-
-
-    port = htons(atoi(port_str));
-
-    //Creating socket
-    Authserver_sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if(Authserver_sock==-1){
-        perror("Error creating main local server socket\n");
-        return -1;
-    }
-
-    //Binding address
-    memset(Authserver_sock_addr,0,sizeof(struct sockaddr_in));
-    Authserver_sock_addr->sin_family=AF_INET;
-    Authserver_sock_addr->sin_port=port;
-    Authserver_sock_addr->sin_addr.s_addr = inet_addr(authaddr_str);
-
-    while(1){
-        while(Main!=NULL){
-            sprintf(buf,"%d:%s",Main->request,Main->group);
-            sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)Authserver_sock_addr ,len);
-
-            if(Main->request==GET){
-                recvfrom(Authserver_sock,buf,sizeof(buf),0,(struct sockaddr*)Authserver_sock_addr ,&len);
-                strcpy(Main->secret,buf);
-            }else{
-                recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)Authserver_sock_addr ,&len);
-                if(Main->request==DEL || Main->request==PUT || Main->request==CMP){
-                    strcpy(buf,Main->secret);
-                    sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)Authserver_sock_addr ,len);
-                    recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)Authserver_sock_addr ,&len);
-
-                }
-                Main->answer=answer;
-            }
-            Main->request=WAIT;
-            Main=Main->next;
-        }
-    }
-
-    close(Authserver_sock);
-
 }

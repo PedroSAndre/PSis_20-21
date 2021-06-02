@@ -57,7 +57,7 @@ int accept_connection_timeout(int * socket_af_stream)
 
 
 int CreateAuthServerSock(char * port_str,char * authaddr_str, int * Authserver_sock, struct sockaddr_in * Authserver_sock_addr){
-    socklen_t len = sizeof (struct sockaddr_in);
+    socklen_t len = sizeof(struct sockaddr_in);
 
     //Creating socket
     *Authserver_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -90,12 +90,15 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
     //From here until AuthCrit the function is critical and no other thread must comunicate with Auth server
     sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)&Authserver_sock_addr ,len);
 
-    if(request==GET){
-        recvfrom(Authserver_sock,buf,sizeof(buf),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
+    if(request==GET || request == PUT){
+        recvfrom(Authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
+        secret=malloc(secret_max_size*sizeof(char));
         strcpy(secret,buf);
+        printf("%s\n",secret);
+        answer=1;
     }else{
         recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
-        if(request==DEL || request==PUT || request==CMP){
+        if(request==DEL  || request==CMP){
 
 
             strcpy(buf,secret);

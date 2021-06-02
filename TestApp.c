@@ -8,17 +8,23 @@ void f(char * key){
 }
 
 
-int main()
+int main(void)
 {
-    char * group="Emilia e a melhor";
-    char * secret="Obviously";
+    char group[group_id_max_size];
+    char secret[secret_max_size];
+    char key[key_max_size];
     char * value;
-    char * key="OK";
-    int err;
-    err=establish_connection(group,secret);
-    
-    if(err==0){
-        err=close_connection();
+    int aux;
+
+    printf("Insert the group you want to access: ");
+    fgets(group, group_id_max_size, stdin);
+    printf("Insert the secret of the group you inserted: ");
+    fgets(secret, secret_max_size, stdin);
+
+
+    aux=establish_connection(group,secret);
+    if(aux!=0){
+        return -1;
     }
     return 0;
 }

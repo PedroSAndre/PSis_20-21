@@ -23,7 +23,6 @@ int CreateUpdateEntry(char * group,char *secret){
     struct HashGroup * Novo;
 
 
-
     Current=Table[TableIndex];
     if(Current==NULL){
         Novo=malloc(sizeof(struct HashGroup));
@@ -155,17 +154,22 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 
     Previous=NULL;
     Current=*Main;
+
+
+
     if(Current==NULL)
     {
+        printf("OK\n");
         group=malloc(sizeof(char)*group_id_max_size);
         aux=sscanf(buf,"%d:%s",&request,group);
         if(aux!=2){
+            free(group);
+            printf("request or group not translated\n");
             return NULL;
         }
         Current=malloc(sizeof(struct Message));
         Current->clientaddr=kvs_localserver_sock_addr;
         Current->request=request;
-        Current->group=malloc(1024*sizeof(char));
         Current->next=NULL;
         strcpy(Current->group,group);
         if(request==PUT || request==CMP || request==DEL){
@@ -175,9 +179,9 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
                 perror("Error alocating memory");
                 return NULL;
             }
-            strcpy(secret,"\0");
-            Current->secret=secret;
+            strcpy(Current->secret,"\0");
         }
+        free(group);
     }else{
         
 
@@ -187,38 +191,29 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
         }
 
         if(Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr || ntohs(kvs_localserver_sock_addr.sin_port)!=ntohs(Current->clientaddr.sin_port)){
-            sscanf(buf,"%d:%s",&request,group);
+            group= malloc(sizeof(char)*group_id_max_size);
+            aux=sscanf(buf,"%d:%s",&request,group);
             if(aux!=2){
+                free(group);
+                printf("request or group not translated\n");
                 return NULL;
             }
             Current=malloc(sizeof(struct Message));
             if(Current==NULL){
+                free(group);
                 perror("Error alocating memory");
                 return NULL;
             }
             Current->clientaddr=kvs_localserver_sock_addr;
-            Current->group=malloc(1024*sizeof(char));
-            if(Current->group==NULL){
-                perror("Error alocating memory");
-                free(Current);
-                return NULL;
-            }
             strcpy(Current->group,group);
             Current->request=request;
             if(request==PUT || request==CMP || request==DEL){
-                secret=malloc(sizeof(char)*secret_max_size);
-                if(secret==NULL){
-                    perror("Error alocating memory");
-                    free(Current->group);
-                    free(Current);
-                    return NULL;
-                }
-                strcpy(secret,"\0");
-                Current->secret=secret;
+                strcpy(Current->secret,"\0");
                 Previous=Current;
                 Previous->next=Current;
                 Current->next=NULL;
             }
+            free(group);
         }else{     
             strcpy(Current->secret,buf);
         }
@@ -229,8 +224,6 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     struct Message * Previous;
     if(Current==Main){
-        free(Current->group);
-        free(Current->secret);
         free(Current);
         return NULL;
     }
@@ -238,14 +231,12 @@ struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     while(Previous->next!=Current){
         Previous=Previous->next;
     }
-    free(Current->group);
-    free(Current->secret);
     Previous->next=Current->next;
     free(Current);
     return Main;
 }
 
-char * generate_secret(){
+char * generate_secret(void){
     char * secret=malloc(key_max_size*sizeof(char));
     if(secret==NULL){
         perror("Error alocating memory");

@@ -3,7 +3,6 @@
 
 #include <pthread.h>
 
-
 int client_sock;
 
 int establish_connection (char * group_id, char * secret)
@@ -43,7 +42,7 @@ int establish_connection (char * group_id, char * secret)
     strcpy(client_sock_addr.sun_path, client_addr); //adress defined in Basic.h
 
 
-    if(connect(client_sock, &kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
+    if(connect(client_sock, (struct sockaddr *)&kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
     {
         perror("Error connecting client socket");
         return -3;
@@ -72,7 +71,7 @@ int establish_connection (char * group_id, char * secret)
         return -6;
     }
     if(answer<0){
-        perror("Request denied");
+        printf("Request denied\n");
         return -7;
     }
     return 0;
@@ -229,7 +228,7 @@ int register_callback(char * key, void (*callback_function)(char *)){
         return -4;
     }
 
-    if(pthread_create(&callback_thread,NULL,callback_function,(void * )key)<0)
+    if(pthread_create(&callback_thread,NULL,&callback_function,(void * )key)<0)
     {
         perror("Error creating thread");
         return -3;

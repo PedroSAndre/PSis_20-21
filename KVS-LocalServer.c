@@ -24,16 +24,15 @@ struct sockaddr_in Authserver_sock_addr;
 int main(int argc, char ** argv)
 {
     unsigned short port;
-    struct sockaddr_in * Authserver_sock_addr=malloc(sizeof(struct sockaddr_in));
     socklen_t len = sizeof (struct sockaddr_in);
     char * port_str;
     char * authaddr_str;
+    char * secret;
 
 
     int selector;
     int aux = 0;
     char input_string[input_string_max_size];
-    char input_string2[input_string_max_size];
     pthread_t acepting_connections_thread_ptid;
 
     if(argc !=3){
@@ -42,7 +41,11 @@ int main(int argc, char ** argv)
     }
 
 
-    CreateAuthServerSock(argv[1],argv[2],&Authserver_sock,Authserver_sock_addr);
+    CreateAuthServerSock(argv[2],argv[1],&Authserver_sock,&Authserver_sock_addr);
+
+    printf("Sucessfully connected\n");
+    printf("IP address is: %s\n", inet_ntoa(Authserver_sock_addr.sin_addr));
+    printf("Port is: %d\n", (int) ntohs(Authserver_sock_addr.sin_port));
 
     state = inicialize_app_status();
     if(state == NULL)
@@ -86,12 +89,18 @@ int main(int argc, char ** argv)
             printf("Insert the new group ID: ");
             fgets(input_string, group_id_max_size, stdin);
 
-            
-            //CONFLICT HERE
-            if(hashInsert_group_table(groups, input_string) == 0)
-                printf("Group created with sucess\n\n");
-            else
-                printf("Error creating selected group\n\n");
+            if(AuthServerCom(PUT,input_string,secret,Authserver_sock,Authserver_sock_addr)==0){
+                printf("No response from Auth server\n");
+            }else{
+                printf("Group %s Created\n",input_string);
+
+                printf("Secret of group '%s': %s\n",input_string,secret);
+                //CONFLICT HERE
+                if(hashInsert_group_table(groups, input_string) == 0)
+                    printf("Group created with sucess\n\n");
+                else
+                    printf("Error creating selected group\n\n");
+            }
         }
         else if(selector==2)
         {

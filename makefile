@@ -38,10 +38,10 @@ App: KVS-lib.o TestApp.o
 LocalServer: key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o KVS-LocalServer.o
 	gcc -g -pthread key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o KVS-LocalServer.o -o KVS-LocalServer.out
 
-AuthServer: Auth_group_secret.o KVS-AuthServer.o
+AuthServer: Authserver.o KVS-AuthServer.o
 	gcc -g KVS-AuthServer.o Authserver.o -o KVS-AuthServer.out
 
 
 
 clearall:
-	rm TestApp.out KVS-LocalServer.out TestApp.o KVS-LocalServer.o KVS-lib.o key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o sockets/*
+	rm TestApp.out KVS-LocalServer.out TestApp.o KVS-LocalServer.o KVS-lib.o key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o KVS-AuthServer.o KVS-AuthServer.out Authserver.o sockets/*

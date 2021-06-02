@@ -19,7 +19,7 @@ int hashCode_group_table(char* key);
 struct group_table * hashCreateInicialize_group_table();
 
 //Inserts or updates elements (returns 0 in sucess, -1 if failed to insert)
-int hashInsert_group_table(struct group_table * table, char * group, struct key_value * key_value_table);
+int hashInsert_group_table(struct group_table * table, char * group);
 
 //Getting elements (returns element in sucess, NULL if failed)
 struct key_value * hashGet_group_table(struct group_table * table, char * group);

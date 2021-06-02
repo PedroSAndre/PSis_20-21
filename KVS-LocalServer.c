@@ -27,13 +27,11 @@ int auth_socket;
 
 int main(void)
 {
-    int cycle_status = 1;
     int selector;
     int aux = 0;
     char input_string[input_string_max_size];
     char input_string2[input_string_max_size];
     pthread_t acepting_connections_thread_ptid;
-    struct key_value * aux_key_value;
 
     state = inicialize_app_status();
     if(state == NULL)
@@ -43,7 +41,6 @@ int main(void)
     }
 
     groups = hashCreateInicialize_group_table();
-
     if(groups == NULL)
     {
         printf("Error inicializing group_table");
@@ -59,7 +56,7 @@ int main(void)
     printf("*****Welcome to KVS Local Server*****\n");
 
     //Main control cycle
-    while(cycle_status)
+    while(server_status)
     {
         selector = 5; //To make sure the server does nothing in case of a bad read
         printf("Select the desired option:\n0) Shutdown server\n1) Create a group\n2) Delete a group\n3) Show group info\n4) Show app status\n\n");
@@ -72,35 +69,28 @@ int main(void)
         if(selector==0)
         {
             server_status=0;
-            cycle_status=0;
         }
         else if(selector==1)
         {
             printf("Insert the new group ID: ");
             fgets(input_string, group_id_max_size, stdin);
-            printf("Insert the secret: ");
-            fgets(input_string2, secret_max_size, stdin);
 
-            //Send key to auth-server
+            //Ask auth-server to create key
 
-            aux_key_value = hashCreateInicialize_key_value();
-            if(aux_key_value != NULL){
-                if(hashInsert_group_table(groups, input_string, aux_key_value) == 0){
-                    printf("Group created with sucess\n\n");}
-                else{
-                    printf("Error creating group\n\n");}}
-            else{
-                printf("Error creating group\n\n");}
+            if(hashInsert_group_table(groups, input_string) == 0)
+                printf("Group created with sucess\n\n");
+            else
+                printf("Error creating selected group\n\n");
         }
         else if(selector==2)
         {
             // Delete also on auth-server
             printf("Insert the group ID to delete: ");
             fgets(input_string, group_id_max_size, stdin);
-            if(hashDelete_group_table(groups, input_string) == 0){
-                printf("Group deleted with sucess\n\n");}
-            else{
-                printf("Error deleting group\n\n");}
+            if(hashDelete_group_table(groups, input_string) == 0)
+                printf("Group deleted with sucess\n\n");
+            else
+                printf("Error deleting selected group\n\n");
         }
         else if(selector == 3)
         {
@@ -110,7 +100,7 @@ int main(void)
         {
             if(all_clients_connected>0)
             {
-                print_status(state);
+                print_status(state,all_clients_connected);
             }
             else
             {
@@ -223,8 +213,8 @@ void handleConnection(void *arg)
 
     char * group_id;
     char * secret;
-    group_id = malloc(1024*sizeof(char));
-    secret = malloc(1024*sizeof(char));
+    group_id = malloc(group_id_max_size*sizeof(char));
+    secret = malloc(secret_max_size*sizeof(char));
 
     client_sock = *((int *)arg);
 
@@ -233,13 +223,13 @@ void handleConnection(void *arg)
     //Ask authentication
 
     read(client_sock,&client_PID,sizeof(client_PID));
-    read(client_sock,group_id,(1024*sizeof(char)));
-    read(client_sock,secret,(1024*sizeof(char)));
+    read(client_sock,group_id,(group_id_max_size*sizeof(char)));
+    read(client_sock,secret,(secret_max_size*sizeof(char)));
     printf("Client_PID: %d\n", client_PID);
     printf("Group_ID: %s\n", group_id);
     printf("Secret: %s\n", secret);
 
-    add_status(state, local_PID, client_PID);
+    add_status(state, local_PID, client_PID, &all_clients_connected);
 
     answer=1;
     write(client_sock,&answer,sizeof(answer));
@@ -247,10 +237,11 @@ void handleConnection(void *arg)
     if(close(client_sock)<0)
     {
         perror("Error closing connection");
-        pthread_exit((void *)-5);
+        pthread_exit(NULL);
     }
 
-    pthread_exit((void *)0);
+    close_status(state,local_PID,client_PID,all_clients_connected);
+    pthread_exit(NULL);
 }
 
 

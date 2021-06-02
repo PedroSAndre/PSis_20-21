@@ -20,12 +20,13 @@ struct app_status * inicialize_app_status(void)
 //Returns 0 in sucess, -1 in failure
 int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected)
 {
-    dummy = realloc(dummy,(*(clients_connected)+2)*sizeof(struct app_status));
+    dummy = realloc(dummy,sizeof(struct app_status));
     if(dummy == NULL)
         return -1;
     *clients_connected = *clients_connected+1;
     dummy[*clients_connected].client_ptid = client_ptid;
     dummy[*clients_connected].process_ptid = process_ptid;
+    dummy[*clients_connected].connection_time = time(NULL);
     dummy[*clients_connected].close_time = -1;
     return 0;
 }

@@ -1,5 +1,6 @@
 #include "Basic.h"
 #include "group_table_struct.h"
+#include "key_value_struct.h"
 
 int hashCode_group_table(char* key)
 {
@@ -35,7 +36,7 @@ struct group_table * hashCreateInicialize_group_table()
 }
 
 
-int hashInsert_group_table(struct group_table * table, char * group, struct key_value * key_value_table)
+int hashInsert_group_table(struct group_table * table, char * group)
 {
     int aux;
     struct group_table * aux2;
@@ -43,7 +44,9 @@ int hashInsert_group_table(struct group_table * table, char * group, struct key_
     if(strcmp(table[aux].group, "\0") == 0 || strcmp(table[aux].group, group) == 0) //Same key or no element
     {
         strcpy(table[aux].group, group);
-        table[aux].key_value_table = key_value_table;
+        table[aux].key_value_table = hashCreateInicialize_key_value();
+        if(table[aux].key_value_table == NULL)
+            return -1;
     }
     else
     {
@@ -54,7 +57,9 @@ int hashInsert_group_table(struct group_table * table, char * group, struct key_
         }
         if(strcmp(aux2->group, group) == 0) //overwriting
         {
-            aux2->key_value_table = key_value_table;
+            aux2->key_value_table = hashCreateInicialize_key_value();
+            if(aux2->key_value_table == NULL)
+                return -1;
         }
         else
         {
@@ -66,7 +71,9 @@ int hashInsert_group_table(struct group_table * table, char * group, struct key_
             }
             aux2->next=NULL;
             strcpy(aux2->group, group);
-            aux2->key_value_table = key_value_table;
+            aux2->key_value_table = hashCreateInicialize_key_value();
+            if(aux2->key_value_table == NULL)
+                return -1;
         }   
     }
     return 0;

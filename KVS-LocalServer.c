@@ -10,12 +10,25 @@
     struct message * next;
 };*/
 
+struct message
+{
+    int answer;
+    char group[group_id_max_size];
+    char secret[secret_max_size];
+    int request;
+    struct message * next;
+};
+
+struct message * Main=NULL;
+
 //Declaration of functions writen in the end
 int createAndBind_UNIX_stream_Socket(char * sock_addr);
 void acceptConnections(void *arg);
 void handleConnection(void *arg);
 void handleAuthCom(void *arg);
 
+
+void AuthServerCom(char * port_str,char * authaddr_str);
 
 //Global variables (to be shared across all server threads)
 int server_status = 1; //1 -> ON; 0 -> OFF 
@@ -292,42 +305,59 @@ void handleConnection(void *arg)
     }
 
 
-    if(close_status(state,local_PID,client_PID,all_clients_connected) == -1)
-        printf("Error closing status");
-    
-
     pthread_exit(NULL);
 }
 
 
-//Functions used to simplify code
-int createAndBindAuthSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr)
-{
-    //To make sure the address is free
-    remove(server_addr);
+
+
+void AuthServerCom(char * port_str,char * authaddr_str){
+    int Authserver_sock;
+    unsigned short port;
+    struct sockaddr_in * Authserver_sock_addr=malloc(sizeof(struct sockaddr_in));
+    socklen_t len = sizeof (struct sockaddr_in);
+    char * buf=malloc(1050*sizeof(char));
+    int answer;
+
+
+    port = htons(atoi(port_str));
+
     //Creating socket
-    *localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if(*localserver_sock==-1){
+    Authserver_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if(Authserver_sock==-1){
         perror("Error creating main local server socket\n");
         return -1;
     }
 
     //Binding address
-    memset(localserver_sock_addr,0,sizeof(struct sockaddr_un));
-    localserver_sock_addr->sun_family=AF_UNIX;
-    strcpy(localserver_sock_addr->sun_path, server_addr); //address defined in Basic.h
-    if(bind(*localserver_sock, localserver_sock_addr, sizeof(*localserver_sock_addr)) < 0)
-    {
-        perror("Error binding socket\n");
-        return -1;
+    memset(Authserver_sock_addr,0,sizeof(struct sockaddr_in));
+    Authserver_sock_addr->sin_family=AF_INET;
+    Authserver_sock_addr->sin_port=port;
+    Authserver_sock_addr->sin_addr.s_addr = inet_addr(authaddr_str);
+
+    while(1){
+        while(Main!=NULL){
+            sprintf(buf,"%d:%s",Main->request,Main->group);
+            sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)Authserver_sock_addr ,len);
+
+            if(Main->request==GET){
+                recvfrom(Authserver_sock,buf,sizeof(buf),0,(struct sockaddr*)Authserver_sock_addr ,&len);
+                strcpy(Main->secret,buf);
+            }else{
+                recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)Authserver_sock_addr ,&len);
+                if(Main->request==DEL || Main->request==PUT || Main->request==CMP){
+                    strcpy(buf,Main->secret);
+                    sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)Authserver_sock_addr ,len);
+                    recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)Authserver_sock_addr ,&len);
+
+                }
+                Main->answer=answer;
+            }
+            Main->request=WAIT;
+            Main=Main->next;
+        }
     }
 
-    return 0;
-}
-
-void handleAuthCom(void *arg){
-
-
-    
+    close(Authserver_sock);
 
 }

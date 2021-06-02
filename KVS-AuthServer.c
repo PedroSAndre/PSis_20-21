@@ -73,8 +73,6 @@ int main(int argc, char**argv)
             return -3;
         }
 
-        printf("%ld\n",(int)(group_id_max_size+2)*sizeof(char));
-
         printf("Received: %s\n",buf);
         
 

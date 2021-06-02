@@ -27,7 +27,7 @@ int main(int argc, char ** argv)
     socklen_t len = sizeof (struct sockaddr_in);
     char * port_str;
     char * authaddr_str;
-    char * secret;
+    char * secret = malloc(secret_max_size*sizeof(char));
 
 
     int selector;
@@ -94,7 +94,7 @@ int main(int argc, char ** argv)
             }else{
                 printf("Group %s Created\n",input_string);
 
-                printf("Secret of group '%s': %s\n",input_string,secret);
+                printf("Secret of group %s%s\n",input_string,secret);
                 //CONFLICT HERE
                 if(hashInsert_group_table(groups, input_string) == 0)
                     printf("Group created with sucess\n\n");

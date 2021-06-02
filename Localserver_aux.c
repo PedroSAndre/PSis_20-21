@@ -88,13 +88,11 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
     sprintf(buf,"%d:%s",request,group);
 
     //From here until AuthCrit the function is critical and no other thread must comunicate with Auth server
-    sendto(Authserver_sock,buf,sizeof(buf),0, (struct sockaddr*)&Authserver_sock_addr ,len);
+    sendto(Authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,len);
 
     if(request==GET || request == PUT){
         recvfrom(Authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
-        secret=malloc(secret_max_size*sizeof(char));
         strcpy(secret,buf);
-        printf("%s\n",secret);
         answer=1;
     }else{
         recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);

@@ -1,34 +1,35 @@
 #include "Basic.h"
-#include "Authserver.h"
+#include "Auth_group_secret.h"
+#include <arpa/inet.h>
 
 
 
-
-int main(int argc, void * arg)
+int main(int argc, char**argv)
 {
     int u;
     int answer;
     int request, ident;
     int kvs_authserver_sock;
+    unsigned short port;
     int kvs_localserver_sock;
     struct sockaddr_in kvs_authserver_sock_addr;
     struct sockaddr_in kvs_localserver_sock_addr;
+    socklen_t len = sizeof(kvs_localserver_sock_addr);
 
     struct Message * Current, * Main=NULL;
 
-    
 
 
-
-    char * group=malloc(1024*sizeof(char));
+    char * group=malloc(group_id_max_size*sizeof(char));
     char * secret;
     char * buf;
 
-    if(argc==1){
-
-    }else{
-
+    if(argc !=3){
+        perror("Wrong arguments");
+        return 0;
     }
+
+    port = htons(atoi(argv[2]));
     
 
     buf = malloc(1024*sizeof(char));
@@ -43,8 +44,9 @@ int main(int argc, void * arg)
     //Binding address
     memset(&kvs_authserver_sock_addr,0,sizeof(struct sockaddr_in));
     kvs_authserver_sock_addr.sin_family=AF_INET;
-    kvs_authserver_sock_addr.sin_port=htons(8000);
-    kvs_authserver_sock_addr.sin_addr.s_addr=;
+    kvs_authserver_sock_addr.sin_port=port;
+    kvs_authserver_sock_addr.sin_addr.s_addr=inet_addr(argv[1]);
+    
     if(bind(kvs_authserver_sock,(struct sockaddr*) &kvs_authserver_sock_addr, sizeof(struct sockaddr_in)) < 0)
     {
         perror("Error binding socket\n");
@@ -54,18 +56,19 @@ int main(int argc, void * arg)
     //Waiting for connection cycle
     kvs_localserver_sock=0;
     memset(&kvs_localserver_sock_addr,0,sizeof(struct sockaddr_in));
-    kvs_localserver_sock_addr.sin_addr.s_addr=inet_addr("127.0.0.1");
 
     
     while(1){
         answer=0;
         
 
-        if(recvfrom(kvs_authserver_sock,buf,sizeof(buf),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in))<0)
+        if(recvfrom(kvs_authserver_sock,buf,sizeof(buf),0,(struct sockaddr *)&kvs_localserver_sock_addr,&len)<0)
         {
             perror("Error receving connection\n");
             return -3;
         }
+
+        printf("Received: %s\n",buf);
         
 
         Current=recoverClientMessage(buf,kvs_localserver_sock_addr,&Main);
@@ -77,24 +80,26 @@ int main(int argc, void * arg)
                 Current->request=WAIT;
                 answer=-1;
             }
-            //Create/update a group-secret pair
             if (Current->request==PUT){
-                if(strcmp(Current->secret,"\0")!=0){
-                    if(CreateUpdateEntry(Current->group,Current->secret)==1){
-                        Main=deleteMessage(Current,Main);
-                        answer=1;
-                    }else{
-                        answer=-1;
-                    }
+                secret=generate_secret();
+                if(secret==NULL){
+                    answer=PUT;
+                }
+                strcpy(Current->secret,secret);
+                if(CreateUpdateEntry(Current->group,Current->secret)==1){
+
+                    sendto(kvs_authserver_sock,secret,sizeof(secret),0,(struct sockaddr * )&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
+
+                    Main=deleteMessage(Current,Main);
+                    answer=PUT;
                 }else{
-                    answer=1;
+                    answer=PUT;
                 }
             //Get secret
             }else if(Current->request==GET){
                 secret=getGroupSecret(Current->group);
                 
-                sendto(kvs_authserver_sock,secret,sizeof(secret),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
-                printf("Secret:%s\n",secret);
+                sendto(kvs_authserver_sock,secret,sizeof(secret),0,(struct sockaddr * )&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
 
                 free(Current->group);
                 free(Current);
@@ -107,7 +112,6 @@ int main(int argc, void * arg)
                 }else{
                     answer=1;
                 } 
-            //Compare values
             }else if(Current->request==CMP){
                 if(strcmp(Current->secret,"\0")!=0){
                     answer=compareHashGroup(Current->group,Current->secret);
@@ -121,8 +125,8 @@ int main(int argc, void * arg)
         }
 
         
-        if(answer!=GET){
-            sendto(kvs_authserver_sock,&answer,sizeof(int),0,&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
+        if(answer!=GET && answer!=PUT){
+            sendto(kvs_authserver_sock,&answer,sizeof(int),0,(struct sockaddr *)&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
             printf("Answer:%d\n",answer);
         }   
         

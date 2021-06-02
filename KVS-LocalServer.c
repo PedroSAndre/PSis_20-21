@@ -11,7 +11,7 @@
 };*/
 
 //Declaration of functions writen in the end
-int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr);
+int createAndBind_UNIX_stream_Socket(char * sock_addr);
 void acceptConnections(void *arg);
 void handleConnection(void *arg);
 void handleAuthCom(void *arg);
@@ -117,31 +117,36 @@ int main(void)
 }
 
 //Functions used to simplify code
-int createAndBindServerSocket(int * localserver_sock, struct sockaddr_un * localserver_sock_addr)
+
+//Returns binded socket (-1 if error)
+int createAndBind_UNIX_stream_Socket(char * sock_addr)
 {
+    int sock;
+    struct sockaddr_un struct_sock_addr;
     //To make sure the address is free
     remove(server_addr);
     //Creating socket
-    *localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if(*localserver_sock==-1){
-        perror("Error creating main local server socket\n");
+    
+    sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(sock==-1){
+        perror("Error creating socket\n");
         return -1;
     }
 
     //Binding address
-    memset(localserver_sock_addr,0,sizeof(struct sockaddr_un));
-    localserver_sock_addr->sun_family=AF_UNIX;
-    strcpy(localserver_sock_addr->sun_path, server_addr); //address defined in Basic.h
-    if(bind(*localserver_sock, localserver_sock_addr, sizeof(*localserver_sock_addr)) < 0)
+    memset(&struct_sock_addr,0,sizeof(struct sockaddr_un));
+    struct_sock_addr.sun_family=AF_UNIX;
+    strcpy(struct_sock_addr.sun_path, sock_addr);
+    if(bind(sock, &struct_sock_addr, sizeof(struct_sock_addr)) < 0)
     {
         perror("Error binding socket\n");
         return -1;
     }
 
-    return 0;
+    return sock;
 }
 
-
+//Accepts connection if timeout is not exeeded
 int accept_connection_timeout(int * socket_af_stream)
 {
     struct timeval tmout;
@@ -166,20 +171,17 @@ int accept_connection_timeout(int * socket_af_stream)
 //Thread functions
 void acceptConnections(void *arg)
 {
-    int aux;
     int kvs_localserver_sock;
-    int client_sock;
+    int client_sock=0;
     struct sockaddr_un kvs_localserver_sock_addr;
     pthread_t temp_PID;
 
-    aux = createAndBindServerSocket(&kvs_localserver_sock, &kvs_localserver_sock_addr);
-    if(aux<0)
+    kvs_localserver_sock = createAndBind_UNIX_stream_Socket(server_addr);
+    if(kvs_localserver_sock<0)
     {
         pthread_exit(NULL);
     }
 
-    
-    client_sock=0;
     if(listen(kvs_localserver_sock,max_waiting_connections)<0)
     {
         perror("Error listening for connections\n");
@@ -194,8 +196,7 @@ void acceptConnections(void *arg)
         {
             if(pthread_create(&temp_PID,NULL,(void *)&handleConnection,(void *)&client_sock)<0)
             {
-                perror("Error creating thread");
-                pthread_exit(NULL);
+                perror("Error creating new connection thread");
             }
         }
     }
@@ -209,38 +210,92 @@ void handleConnection(void *arg)
     int client_sock;
     int answer;
     int client_PID;
+    int cycle = 1;
+    long int value_size = 0;
     pthread_t local_PID;
+    struct key_value * local_key_value_table;
 
     char * group_id;
     char * secret;
+    char * key;
+    char * value;
     group_id = malloc(group_id_max_size*sizeof(char));
     secret = malloc(secret_max_size*sizeof(char));
+    key = malloc(key_max_size*sizeof(char));
 
     client_sock = *((int *)arg);
 
     local_PID = pthread_self();
 
-    //Ask authentication
-
     read(client_sock,&client_PID,sizeof(client_PID));
     read(client_sock,group_id,(group_id_max_size*sizeof(char)));
     read(client_sock,secret,(secret_max_size*sizeof(char)));
-    printf("Client_PID: %d\n", client_PID);
-    printf("Group_ID: %s\n", group_id);
-    printf("Secret: %s\n", secret);
 
-    add_status(state, local_PID, client_PID, &all_clients_connected);
-
+    local_key_value_table = hashGet_group_table(groups, group_id);
+    if(local_key_value_table == NULL)
+    {
+        answer = 0;
+        write(client_sock,&answer,sizeof(answer));
+        close(client_sock);
+        pthread_exit(NULL);
+    }
+    
+    //AUTENTICATE HERE
     answer=1;
     write(client_sock,&answer,sizeof(answer));
-    read(client_sock,&answer,sizeof(answer));
+
+    if(add_status(state, local_PID, client_PID, &all_clients_connected) == -1)
+        printf("Error updating status");
+    //Connection cycle
+    while(server_status == 1 && cycle)
+    {
+        answer = WAIT;
+        key[0] = '\0';
+        read(client_sock,&answer,sizeof(answer));
+        if(answer == WAIT)
+            continue;
+        else if(answer == PUT)
+        {
+            read(client_sock,key,key_max_size*sizeof(char));
+            read(client_sock,&value_size,sizeof(value_size));
+            value = malloc(value_size*sizeof(char));
+            read(client_sock,value,value_size*sizeof(char));
+            answer = hashInsert_key_value(local_key_value_table,key,value);
+            answer++;
+            write(client_sock,&answer,sizeof(answer));
+            free(value);
+        }
+        else if(answer == GET)
+        {
+            read(client_sock,key,key_max_size*sizeof(char));
+            value = hashGet_key_value(local_key_value_table,key);
+            if(value == NULL)
+                value_size = 0;
+            else
+                value_size = strlen(value);
+            write(client_sock,&value_size,sizeof(value_size));
+            write(client_sock,value,value_size*sizeof(char));
+        }
+        else if(answer == DEL)
+        {
+            read(client_sock,key,key_max_size*sizeof(char));
+            answer = hashDelete_key_value(local_key_value_table,key);
+            answer++; //Updating from one format to another
+            write(client_sock,&answer,sizeof(answer));
+        }
+    }
+    
     if(close(client_sock)<0)
     {
         perror("Error closing connection");
         pthread_exit(NULL);
     }
 
-    close_status(state,local_PID,client_PID,all_clients_connected);
+
+    if(close_status(state,local_PID,client_PID,all_clients_connected) == -1)
+        printf("Error closing status");
+    
+
     pthread_exit(NULL);
 }
 

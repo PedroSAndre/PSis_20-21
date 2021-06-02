@@ -83,7 +83,7 @@ int main(int argc, char**argv)
             if (Current->request==PUT){
                 secret=generate_secret();
                 if(secret==NULL){
-                    
+                    answer=PUT;
                 }
                 strcpy(Current->secret,secret);
                 if(CreateUpdateEntry(Current->group,Current->secret)==1){
@@ -93,7 +93,6 @@ int main(int argc, char**argv)
                     Main=deleteMessage(Current,Main);
                     answer=PUT;
                 }else{
-
                     answer=PUT;
                 }
             //Get secret

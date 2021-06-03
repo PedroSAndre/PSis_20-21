@@ -1,5 +1,8 @@
 #include "Basic.h"
 #include "key_value_struct.h"
+#include <pthread.h>
+
+
 
 
 int hashCode_key_value(char* key)
@@ -180,3 +183,32 @@ int hashDelete_key_value(struct key_value * table, char * key)
 }
 
 int hashFree_key_value(struct key_value * table);
+
+
+
+struct key_value * hashGetTable_key_value(struct key_value * table, char * key)
+{
+    int aux;
+    struct key_value * aux2;
+    aux = hashCode_key_value(key);
+    if(strcmp(table[aux].key, key) == 0) //Same key
+    {
+        return &(table[aux]);
+    }
+    else
+    {
+        aux2 = table + aux*sizeof(struct key_value);
+        while(aux2->next != NULL && strcmp(aux2->key, key) != 0)
+        {
+            aux2 = aux2->next;
+        }
+        if(strcmp(aux2->key, key) == 0)
+        {
+            return aux2;
+        }
+        else
+        {
+            return NULL;
+        }   
+    }
+}

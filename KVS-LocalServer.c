@@ -204,7 +204,16 @@ void handleConnection(void *arg)
     int cycle = 1;
     long int value_size = 0;
     pthread_t local_PID;
-    struct key_value * local_key_value_table;
+    struct key_value * local_key_value_table, *table;
+
+
+    pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_cond_init(&cond,NULL); 
+    pthread_mutex_init(&mutex,NULL);
+
+    
 
     char * group_id;
     char * secret;
@@ -283,9 +292,23 @@ void handleConnection(void *arg)
             else if(answer == CLS)
             {
                 cycle = 0;
+            }else if(answer==CALL){
+                read(client_sock,key,key_max_size*sizeof(char));
+                table=hashGetTable_key_value(local_key_value_table,key);
+                pthread_mutex_trylock(table->mutex);
+                if(table==NULL){
+                    answer=0;
+                }else{
+                    pthread_cond_wait(table->cond,table->mutex);
+                }
+                pthread_mutex_unlock(table->mutex);
+                answer=1;
+                write(client_sock,&answer,sizeof(answer));
             }
         }
     }
+
+    //Delete Status
     
     if(close(client_sock)<0)
     {

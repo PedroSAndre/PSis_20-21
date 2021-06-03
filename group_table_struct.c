@@ -4,6 +4,7 @@
 
 int hashCode_group_table(char* key)
 {
+    return 1;
     int i=0;
     int index = 0;
 
@@ -51,7 +52,7 @@ int hashInsert_group_table(struct group_table * table, char * group)
     }
     else
     {
-        aux2 = table + aux*sizeof(struct group_table);
+        aux2 = &(table[aux]);
         while(aux2->next != NULL && strcmp(aux2->group, group) != 0)
         {
             aux2 = aux2->next;
@@ -86,13 +87,13 @@ struct key_value * hashGet_group_table(struct group_table * table, char * group)
     int aux;
     struct group_table * aux2;
     aux = hashCode_group_table(group);
-    if(strcmp(table[aux].group, group) == 0) //Same key
+    if(strcmp(table[aux].group, group) == 0) //Same group
     {
         return table[aux].key_value_table;
     }
     else
     {
-        aux2 = table + aux*sizeof(struct group_table);
+        aux2 = &(table[aux]);
         while(aux2->next != NULL && strcmp(aux2->group, group) != 0)
         {
             aux2 = aux2->next;

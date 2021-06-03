@@ -9,7 +9,7 @@ struct group_table
 {
     char group[group_id_max_size];
     struct key_value * key_value_table;
-    struct group_value * next;
+    struct group_table * next;
 };
 
 //Returns the hash code generated for a certain string (argument key)

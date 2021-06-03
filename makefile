@@ -45,3 +45,13 @@ AuthServer: Authserver.o KVS-AuthServer.o
 
 clearall:
 	rm TestApp.out KVS-LocalServer.out TestApp.o KVS-LocalServer.o KVS-lib.o key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o KVS-AuthServer.o KVS-AuthServer.out Authserver.o sockets/*
+
+
+
+
+
+test_structs.o: Basic.h key_value_struct.h group_table_struct.h test_structs.c
+	gcc -g -c test_structs.c
+
+TestingStructs: key_value_struct.o group_table_struct.o test_structs.o
+	gcc -pthread -g key_value_struct.o group_table_struct.o test_structs.o -o test_structs.out

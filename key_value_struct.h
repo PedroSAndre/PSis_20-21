@@ -10,8 +10,9 @@ struct key_value
 {
     char key[key_max_size];
     char * value;
-    pthread_cond_t *cond;
-    pthread_mutex_t *mutex;
+    int signal;
+    pthread_cond_t cond;
+    pthread_mutex_t mutex;
     struct key_value * next;
 };
 

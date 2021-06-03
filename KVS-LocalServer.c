@@ -295,14 +295,18 @@ void handleConnection(void *arg)
             }else if(answer==CALL){
                 read(client_sock,key,key_max_size*sizeof(char));
                 table=hashGetTable_key_value(local_key_value_table,key);
-                pthread_mutex_trylock(table->mutex);
-                if(table==NULL){
+                
+                if(table==NULL){ 
                     answer=0;
                 }else{
-                    pthread_cond_wait(table->cond,table->mutex);
+                    pthread_mutex_trylock(&(table->mutex));
+                    if(table->signal==0){
+                        table->signal=1;
+                    }
+                    pthread_cond_wait(&(table->cond),&(table->mutex));
+                    pthread_mutex_unlock(&(table->mutex));
+                    answer=1;
                 }
-                pthread_mutex_unlock(table->mutex);
-                answer=1;
                 write(client_sock,&answer,sizeof(answer));
             }
         }

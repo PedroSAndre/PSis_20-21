@@ -44,6 +44,7 @@ int hashInsert_group_table(struct group_table * table, char * group)
     if(strcmp(table[aux].group, "\0") == 0 || strcmp(table[aux].group, group) == 0) //Same key or no element
     {
         strcpy(table[aux].group, group);
+        //Fazer free da tabela que estava aqui
         table[aux].key_value_table = hashCreateInicialize_key_value();
         if(table[aux].key_value_table == NULL)
             return -1;

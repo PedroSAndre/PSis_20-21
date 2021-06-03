@@ -4,7 +4,6 @@
 
 int hashCode_group_table(char* key)
 {
-    return 1;
     int i=0;
     int index = 0;
 

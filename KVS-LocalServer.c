@@ -322,6 +322,8 @@ void handleConnection(void *arg)
         perror("Error closing connection");
     }
 
+    if(close_status(state, local_PID, client_PID, all_clients_connected) == -1)
+        printf("Error updating status");
 
     pthread_exit(NULL);
 }

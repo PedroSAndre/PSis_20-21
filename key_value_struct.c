@@ -7,7 +7,6 @@
 
 int hashCode_key_value(char* key)
 {
-    return 1;
     int i=0;
     int index = 0;
     while(key[i]!='\0' && i<key_max_size)

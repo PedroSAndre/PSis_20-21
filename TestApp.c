@@ -7,15 +7,6 @@ void f(char * key){
     pthread_exit(0);
 }
 
-void register_callback_thread(void * arg){
-    char * key=(char*)arg;
-
-    if(register_callback(key,f)!=1){
-        printf("Something went wrong\n");
-        pthread_exit(0);
-    }
-    pthread_exit(0);
-}
 
 
 int main(void)
@@ -69,6 +60,7 @@ int main(void)
                             value=malloc(100*sizeof(char));
                             printf("Insert the value of the key you inserted: ");
                             fgets(value,100, stdin);
+                            value[strlen(value)-1] = '\0';
                             if(put_value(key,value)==1){
                                 printf("Successfully inserted value\n");
                             }else{
@@ -80,7 +72,7 @@ int main(void)
                             key[strlen(key)-1]='\0';
                             if(get_value(key,&value)==1){
                                 printf("Value of key %s\n",key);
-                                printf("Value: %s",value);
+                                printf("Value: %s\n",value);
                             }else{
                                 printf("Something went wrong\n");
                             }
@@ -98,12 +90,9 @@ int main(void)
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
                             printf("(Only a simple callback function is used)\n");
-                            if(pthread_create(&register_callback_thread_id,NULL,(void *)&register_callback_thread,(void*) key)<0)
+                            if(register_callback(key,f)!=1)
                             {
-                                perror("Error creating thread");
-                                return -1;
-                            }else{
-                                printf("Waiting for changes in value...\n");
+                                printf("Something went wrong\n");
                             }
                         }else if(selector == '5'){
                             printf("Are you sure you want to leave the connection to group %s?\n",group);

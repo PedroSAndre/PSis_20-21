@@ -88,19 +88,17 @@ int put_value(char * key, char * value)
         return -1;
     }
 
-    if(write(client_sock,&key,key_max_size* sizeof(char))==-1){
+    if(write(client_sock,key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
         return -2;
     }
-
-    printf("%ld\n",vallen);
 
     if(write(client_sock,&vallen,sizeof(long int))==-1){
         perror("write(vallen)  error");
         return -3;
     }
 
-    if(write(client_sock,&value,vallen*sizeof(char))==-1){
+    if(write(client_sock,value,vallen*sizeof(char))==-1){
         perror("write(value)  error");
         return -4;
     }
@@ -125,7 +123,7 @@ int get_value(char * key, char ** value)
         return -1;
     }
 
-    if(write(client_sock,&key,key_max_size* sizeof(char))==-1){
+    if(write(client_sock,key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
         return -1;
     }
@@ -169,7 +167,7 @@ int delete_value(char * key)
         perror("write(flag:DEL)  error");
         return -1;
     }
-    if(write(client_sock,&key,key_max_size* sizeof(char))==-1){
+    if(write(client_sock,key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
         return -2;
     }
@@ -202,7 +200,7 @@ int register_callback(char * key, void (*callback_function)(char *)){
     }
     
     if(answer==1){
-        if(pthread_create(&thread_id,NULL,(void *)&callback_function,(void *)key)<0)
+        if(pthread_create(&thread_id,NULL,(void *)callback_function,(void *)key)<0)
         {
             perror("Error creating thread");
             return -3;

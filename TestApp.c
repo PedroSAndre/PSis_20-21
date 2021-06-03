@@ -7,6 +7,16 @@ void f(char * key){
     pthread_exit(0);
 }
 
+void register_callback_thread(void * arg){
+    char * key=(char*)arg;
+
+    if(register_callback(key,f)!=1){
+        printf("Something went wrong\n");
+        pthread_exit(0);
+    }
+    pthread_exit(0);
+}
+
 
 int main(void)
 {
@@ -17,6 +27,7 @@ int main(void)
     char key[key_max_size];
     char * value;
     int aux=1;
+    pthread_t register_callback_thread_id;
 
 
 
@@ -83,10 +94,12 @@ int main(void)
                             printf("Insert the key of the entry you want to monitor: ");
                             fgets(key, key_max_size, stdin);
                             printf("(Only a simple callback function is used)\n");
-                            if(delete_value(key)==1){
-                                printf("Successfully deleted entry of key %s",key);
+                            if(pthread_create(&register_callback_thread_id,NULL,(void *)&register_callback_thread,(void*) key)<0)
+                            {
+                                perror("Error creating thread");
+                                return -1;
                             }else{
-                                printf("Something went wrong\n");
+                                printf("Waiting for changes in value...\n");
                             }
                         }else if(selector == '5'){
                             printf("Are you sure you want to leave the connection to group %s?\n",group);

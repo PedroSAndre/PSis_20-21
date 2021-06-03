@@ -65,6 +65,7 @@ int main(void)
                         if(selector=='1'){
                             printf("Insert the key you want to access: ");
                             fgets(key, key_max_size, stdin);
+                            key[strlen(key)-1]='\0';
                             value=malloc(100*sizeof(char));
                             printf("Insert the value of the key you inserted: ");
                             fgets(value,100, stdin);
@@ -76,8 +77,9 @@ int main(void)
                         }else if(selector=='2'){
                             printf("Insert the key of the entry you want to access: ");
                             fgets(key, key_max_size, stdin);
+                            key[strlen(key)-1]='\0';
                             if(get_value(key,&value)==1){
-                                printf("Value of key %s",key);
+                                printf("Value of key %s\n",key);
                                 printf("Value: %s",value);
                             }else{
                                 printf("Something went wrong\n");
@@ -85,6 +87,7 @@ int main(void)
                         }else if(selector=='3'){
                             printf("Insert the key of the entry you want to delete: ");
                             fgets(key, key_max_size, stdin);
+                            key[strlen(key)-1]='\0';
                             if(delete_value(key)==1){
                                 printf("Successfully deleted entry of key %s",key);
                             }else{
@@ -93,6 +96,7 @@ int main(void)
                         }else if(selector=='4'){
                             printf("Insert the key of the entry you want to monitor: ");
                             fgets(key, key_max_size, stdin);
+                            key[strlen(key)-1]='\0';
                             printf("(Only a simple callback function is used)\n");
                             if(pthread_create(&register_callback_thread_id,NULL,(void *)&register_callback_thread,(void*) key)<0)
                             {
@@ -111,6 +115,8 @@ int main(void)
                             }else{
                                 if(close_connection()==1){
                                     printf("Connection closed\n");
+                                    selector='5';
+                                    aux=1;
                                 }else{
                                     printf("Something went wrong\n");
                                 }

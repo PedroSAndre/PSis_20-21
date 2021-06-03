@@ -38,7 +38,6 @@ int establish_connection (char * group_id, char * secret)
     memset(&client_sock_addr,0,sizeof(struct sockaddr_un));
     client_sock_addr.sun_family=AF_UNIX;
     sprintf(client_addr,"%s%d",part_client_addr,getpid());
-    printf("%s\n",client_addr);
     strcpy(client_sock_addr.sun_path, client_addr); //adress defined in Basic.h
 
 
@@ -55,12 +54,12 @@ int establish_connection (char * group_id, char * secret)
         return -4;
     }
 
-    if(write(client_sock,group_id,1024*sizeof(char))==-1){
+    if(write(client_sock,group_id,group_id_max_size*sizeof(char))==-1){
         perror("write() error");
         return -4;
     }
 
-    if(write(client_sock,secret,1024*sizeof(char))==-1){
+    if(write(client_sock,secret,secret_max_size*sizeof(char))==-1){
         perror("write() error");
         return -5;
     }
@@ -84,15 +83,17 @@ int put_value(char * key, char * value)
     int buf=PUT;
     long int vallen=strlen(value);
 
-    if(write(client_sock,&buf,sizeof(buf))==-1){
+    if(write(client_sock,&buf,sizeof(int))==-1){
         perror("write(flag:PUT)  error");
         return -1;
     }
 
-    if(write(client_sock,&key,sizeof(key))==-1){
+    if(write(client_sock,&key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
         return -2;
     }
+
+    printf("%ld\n",vallen);
 
     if(write(client_sock,&vallen,sizeof(long int))==-1){
         perror("write(vallen)  error");
@@ -104,7 +105,13 @@ int put_value(char * key, char * value)
         return -4;
     }
 
-    return 1;
+    if(read(client_sock,&buf,sizeof(int))==-1)
+    {
+        perror("No answer from local server");
+        return -4;
+    }
+
+    return buf;
 }
 
 
@@ -118,7 +125,7 @@ int get_value(char * key, char ** value)
         return -1;
     }
 
-    if(write(client_sock,&key,sizeof(key))==-1){
+    if(write(client_sock,&key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
         return -1;
     }
@@ -162,20 +169,29 @@ int delete_value(char * key)
         perror("write(flag:DEL)  error");
         return -1;
     }
-    if(write(client_sock,&key,sizeof(key))==-1){
+    if(write(client_sock,&key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
         return -2;
     }
-    return 1;
+
+    if(read(client_sock,&buf,sizeof(int))==-1)
+    {
+        perror("No answer from local server");
+        return -4;
+    }
+
+    return buf;
 }
 
 int register_callback(char * key, void (*callback_function)(char *)){
     int answer=CALL;
     pthread_t thread_id;
+    
     if(write(client_sock,&answer,sizeof(int))==-1){
         perror("write(flag:CALL)  error");
         return -1;
     }
+
     if(write(client_sock,key, key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
         return -1;
@@ -184,10 +200,15 @@ int register_callback(char * key, void (*callback_function)(char *)){
         perror("No answer from local server");
         return -2;
     }
-    if(pthread_create(&thread_id,NULL,(void *)&callback_function,(void *)key)<0)
-    {
-        perror("Error creating thread");
-        return -3;
+    
+    if(answer==1){
+        if(pthread_create(&thread_id,NULL,(void *)&callback_function,(void *)key)<0)
+        {
+            perror("Error creating thread");
+            return -3;
+        }
+    }else{
+        printf("Something went wrong\n");
     }
     return 1;
 }

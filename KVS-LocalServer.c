@@ -309,6 +309,7 @@ void handleConnection(void *arg)
                     pthread_mutex_unlock(&(table->mutex));
                     answer=1;
                 }
+                
                 write(client_sock,&answer,sizeof(answer));
             }
         }

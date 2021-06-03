@@ -139,9 +139,9 @@ int hashDelete_key_value(struct key_value * table, char * key)
     if(strcmp(table[aux].key, key) == 0) //Same key
     {
         if(table[aux].signal==1){
-            pthread_mutex_trylock(table[aux].mutex);
-            pthread_cond_signal(table[aux].cond);
-            pthread_mutex_unlock(table[aux].mutex);
+            pthread_mutex_trylock(&(table[aux].mutex));
+            pthread_cond_signal(&(table[aux].cond));
+            pthread_mutex_unlock(&(table[aux].mutex));
         }
         
         if(table[aux].next == NULL)

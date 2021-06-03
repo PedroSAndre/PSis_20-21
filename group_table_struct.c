@@ -7,7 +7,7 @@ int hashCode_group_table(char* key)
     int i=0;
     int index = 0;
 
-    while(key[i]!='\0' && i<group_id_max_size){
+    while(key[i]!='\0'&& key[i]!='\n' && i<group_id_max_size){
         index=(key[i]+index)%n_groups_max;
         i++;
     }

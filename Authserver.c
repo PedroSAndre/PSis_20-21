@@ -9,7 +9,7 @@
 int HashIndex(char * group){
     int i=0;
     int Index=0;
-    while(group[i]!='\0' && i<group_id_max_size){
+    while(group[i]!='\0' && group[i]!='\n' && i<group_id_max_size){
         Index=(group[i]+Index)%SIZE;
         i++;
     }
@@ -147,7 +147,6 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 
     if(Current==NULL)
     {
-        printf("OK\n");
         group=malloc(sizeof(char)*group_id_max_size);
         aux=sscanf(buf,"%d:%s",&request,group);
         if(aux!=2){
@@ -160,7 +159,7 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
         Current->request=request;
         Current->next=NULL;
         strcpy(Current->group,group);
-        if(request==PUT || request==CMP || request==DEL){
+        if(request==CMP){
             *Main=Current;
             secret=malloc(sizeof(char)*secret_max_size);
             if(secret==NULL){
@@ -195,7 +194,7 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
             Current->clientaddr=kvs_localserver_sock_addr;
             strcpy(Current->group,group);
             Current->request=request;
-            if(request==PUT || request==CMP || request==DEL){
+            if(request==CMP){
                 strcpy(Current->secret,"\0");
                 Previous=Current;
                 Previous->next=Current;

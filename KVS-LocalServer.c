@@ -88,6 +88,7 @@ int main(int argc, char ** argv)
         {
             printf("Insert the new group ID: ");
             fgets(input_string, group_id_max_size, stdin);
+            input_string[strlen(input_string)-1]='\0';
 
             if(AuthServerCom(PUT,input_string,secret,Authserver_sock,Authserver_sock_addr)==0){
                 printf("No response from Auth server\n");
@@ -236,16 +237,17 @@ void handleConnection(void *arg)
     local_key_value_table = hashGet_group_table(groups, group_id);
     if(local_key_value_table == NULL)
     {
-        answer = 0;
+        answer = -1;
         write(client_sock,&answer,sizeof(answer));
         close(client_sock);
         pthread_exit(NULL);
     }
     
     answer=AuthServerCom(CMP,group_id,secret,Authserver_sock,Authserver_sock_addr);
+    answer--;
     write(client_sock,&answer,sizeof(answer));
 
-    if (answer==1){
+    if (answer==0){
 
         if(add_status(state, local_PID, client_PID, &all_clients_connected) == -1)
             printf("Error updating status");

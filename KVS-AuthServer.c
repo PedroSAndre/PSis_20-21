@@ -82,6 +82,7 @@ int main(int argc, char**argv)
         }else{
             if(strcmp(Current->group,"\0")==0){
                 Current->request=WAIT;
+                free(Current);
                 answer=-1;
             }
             if (Current->request==PUT){
@@ -96,9 +97,9 @@ int main(int argc, char**argv)
                     printf("Secret:%s\n",secret);
 
                     free(Current);
-                    answer=PUT;
+                    answer=GET;
                 }else{
-                    answer=PUT;
+                    answer=GET;
                 }
             //Get secret
             }else if(Current->request==GET){
@@ -126,7 +127,7 @@ int main(int argc, char**argv)
         }
 
         
-        if(answer!=GET && answer!=PUT){
+        if(answer!=GET){
             sendto(kvs_authserver_sock,&answer,sizeof(int),0,(struct sockaddr *)&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
             printf("Answer:%d\n",answer);
         }   

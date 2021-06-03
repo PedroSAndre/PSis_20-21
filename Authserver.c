@@ -9,7 +9,7 @@
 int HashIndex(char * group){
     int i=0;
     int Index=0;
-    while(group[i]!='\0' && i<group_id_max_size){
+    while(group[i]!='\0' && group[i]!='\n' && i<group_id_max_size){
         Index=(group[i]+Index)%SIZE;
         i++;
     }
@@ -61,7 +61,7 @@ int CreateUpdateEntry(char * group,char *secret){
 
 }
 
-int DeleteEntry(char * group, char * secret){
+int DeleteEntry(char * group){
     int TableIndex=HashIndex(group);
     struct HashGroup * Current,* Previous;
     
@@ -72,14 +72,9 @@ int DeleteEntry(char * group, char * secret){
     }
 
     if(strcmp(Current->group,group)==0){
-        if(strcmp(Current->secret,secret)==0){
-            Table[TableIndex]=Current->next;
-            free(Current);
-            return 1;
-        }else{
-            perror("Delete request denied");
-            return -1;
-        }
+        Table[TableIndex]=Current->next;
+        free(Current);
+        return 1;
     }
     Previous=Current;
     Current=Current->next;
@@ -87,16 +82,9 @@ int DeleteEntry(char * group, char * secret){
     while(Current!=NULL){
 
         if(strcmp(Current->group,group)==0){
-            if(strcmp(Current->secret,secret)==0){
-                if(Current->secret==secret){
-                    Previous->next=Current->next;
-                    free(Current);
-                    return 1; 
-                }else{
-                    perror("Delete request denied");
-                    return -1;
-                }
-            }
+            Previous->next=Current->next;
+            free(Current);
+            return 1; 
         }
         Previous=Current;
         Current=Current->next;
@@ -159,7 +147,6 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 
     if(Current==NULL)
     {
-        printf("OK\n");
         group=malloc(sizeof(char)*group_id_max_size);
         aux=sscanf(buf,"%d:%s",&request,group);
         if(aux!=2){
@@ -172,7 +159,7 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
         Current->request=request;
         Current->next=NULL;
         strcpy(Current->group,group);
-        if(request==PUT || request==CMP || request==DEL){
+        if(request==CMP){
             *Main=Current;
             secret=malloc(sizeof(char)*secret_max_size);
             if(secret==NULL){
@@ -207,7 +194,7 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
             Current->clientaddr=kvs_localserver_sock_addr;
             strcpy(Current->group,group);
             Current->request=request;
-            if(request==PUT || request==CMP || request==DEL){
+            if(request==CMP){
                 strcpy(Current->secret,"\0");
                 Previous=Current;
                 Previous->next=Current;

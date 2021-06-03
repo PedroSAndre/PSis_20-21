@@ -27,7 +27,7 @@ int main(int argc, char ** argv)
     socklen_t len = sizeof (struct sockaddr_in);
     char * port_str;
     char * authaddr_str;
-    char * secret;
+    char * secret = malloc(secret_max_size*sizeof(char));
 
 
     int selector;
@@ -88,13 +88,14 @@ int main(int argc, char ** argv)
         {
             printf("Insert the new group ID: ");
             fgets(input_string, group_id_max_size, stdin);
+            input_string[strlen(input_string)-1]='\0';
 
             if(AuthServerCom(PUT,input_string,secret,Authserver_sock,Authserver_sock_addr)==0){
                 printf("No response from Auth server\n");
             }else{
                 printf("Group %s Created\n",input_string);
 
-                printf("Secret of group '%s': %s\n",input_string,secret);
+                printf("Secret of group %s%s\n",input_string,secret);
                 //CONFLICT HERE
                 if(hashInsert_group_table(groups, input_string) == 0)
                     printf("Group created with sucess\n\n");
@@ -104,18 +105,35 @@ int main(int argc, char ** argv)
         }
         else if(selector==2)
         {
-            // Delete also on auth-server
-            //CONFLICT HERE
-            printf("Insert the group ID to delete: ");
+            printf("Delete the group with ID: ");
             fgets(input_string, group_id_max_size, stdin);
-            if(hashDelete_group_table(groups, input_string) == 0)
-                printf("Group deleted with sucess\n\n");
-            else
-                printf("Error deleting selected group\n\n");
+            aux=AuthServerCom(DEL,input_string,secret,Authserver_sock,Authserver_sock_addr);
+            if(aux==0 ){
+                printf("No response from Auth server\n");
+            }else if(aux==1){
+                    //CONFLICT HERE
+                    if(hashDelete_group_table(groups, input_string) == 0)
+                        printf("Group deleted with sucess\n\n");
+                    else
+                        printf("Error deleting selected group\n\n");
+                
+            }else{
+                printf("Something went wrong in the Auth Server\n");
+            }
         }
         else if(selector == 3)
         {
-            //easy to implment
+            printf("Get info of group ID: ");
+            fgets(input_string, group_id_max_size, stdin);
+            aux=AuthServerCom(GET,input_string,secret,Authserver_sock,Authserver_sock_addr);
+            if(aux==0){
+                printf("No response from Auth server\n");
+            }else if(aux==1){
+                
+                
+            }else{
+                printf("Something went wrong in the Auth Server\n");
+            }
         }
         else if(selector == 4)
         {
@@ -187,7 +205,16 @@ void handleConnection(void *arg)
     int cycle = 1;
     long int value_size = 0;
     pthread_t local_PID;
-    struct key_value * local_key_value_table;
+    struct key_value * local_key_value_table, *table;
+
+
+    pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_cond_init(&cond,NULL); 
+    pthread_mutex_init(&mutex,NULL);
+
+    
 
     char * group_id;
     char * secret;
@@ -205,20 +232,22 @@ void handleConnection(void *arg)
     read(client_sock,group_id,(group_id_max_size*sizeof(char)));
     read(client_sock,secret,(secret_max_size*sizeof(char)));
 
+
     //CONFLICT HERE
     local_key_value_table = hashGet_group_table(groups, group_id);
     if(local_key_value_table == NULL)
     {
-        answer = 0;
+        answer = -1;
         write(client_sock,&answer,sizeof(answer));
         close(client_sock);
         pthread_exit(NULL);
     }
     
     answer=AuthServerCom(CMP,group_id,secret,Authserver_sock,Authserver_sock_addr);
+    answer--;
     write(client_sock,&answer,sizeof(answer));
 
-    if (answer==1){
+    if (answer==0){
 
         if(add_status(state, local_PID, client_PID, &all_clients_connected) == -1)
             printf("Error updating status");
@@ -265,9 +294,28 @@ void handleConnection(void *arg)
             else if(answer == CLS)
             {
                 cycle = 0;
+            }else if(answer==CALL){
+                read(client_sock,key,key_max_size*sizeof(char));
+                table=hashGetTable_key_value(local_key_value_table,key);
+                
+                if(table==NULL){ 
+                    answer=0;
+                }else{
+                    pthread_mutex_trylock(&(table->mutex));
+                    if(table->signal==0){
+                        table->signal=1;
+                    }
+                    pthread_cond_wait(&(table->cond),&(table->mutex));
+                    pthread_mutex_unlock(&(table->mutex));
+                    answer=1;
+                }
+                
+                write(client_sock,&answer,sizeof(answer));
             }
         }
     }
+
+    //Delete Status
     
     if(close(client_sock)<0)
     {

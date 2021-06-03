@@ -66,15 +66,11 @@ int main(int argc, char**argv)
     while(1){
         answer=0;
 
-
         if(recvfrom(kvs_authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr *)&kvs_localserver_sock_addr,&len)<0)
         {
             perror("Error receving connection\n");
             return -3;
         }
-
-        printf("%ld\n",(int)(group_id_max_size+2)*sizeof(char));
-
         printf("Received: %s\n",buf);
         
 
@@ -86,6 +82,7 @@ int main(int argc, char**argv)
         }else{
             if(strcmp(Current->group,"\0")==0){
                 Current->request=WAIT;
+                free(Current);
                 answer=-1;
             }
             if (Current->request==PUT){
@@ -100,9 +97,9 @@ int main(int argc, char**argv)
                     printf("Secret:%s\n",secret);
 
                     free(Current);
-                    answer=PUT;
+                    answer=GET;
                 }else{
-                    answer=PUT;
+                    answer=GET;
                 }
             //Get secret
             }else if(Current->request==GET){
@@ -115,12 +112,8 @@ int main(int argc, char**argv)
                 answer=GET;
             //Delete entry for group
             }else if(Current->request==DEL){
-                if(strcmp(Current->secret,"\0")!=0){
-                    answer=DeleteEntry(Current->group,Current->secret);
-                    Main=deleteMessage(Current,Main);
-                }else{
-                    answer=1;
-                } 
+                answer=DeleteEntry(Current->group);
+                Main=deleteMessage(Current,Main);
             }else if(Current->request==CMP){
                 if(strcmp(Current->secret,"\0")!=0){
                     answer=compareHashGroup(Current->group,Current->secret);
@@ -134,7 +127,7 @@ int main(int argc, char**argv)
         }
 
         
-        if(answer!=GET && answer!=PUT){
+        if(answer!=GET){
             sendto(kvs_authserver_sock,&answer,sizeof(int),0,(struct sockaddr *)&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
             printf("Answer:%d\n",answer);
         }   

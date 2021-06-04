@@ -287,6 +287,7 @@ void handleConnection(void *arg)
                     value_size = strlen(value);
                 write(client_sock,&value_size,sizeof(value_size));
                 write(client_sock,value,value_size*sizeof(char));
+                free(value);
             }
             else if(answer == DEL)
             {

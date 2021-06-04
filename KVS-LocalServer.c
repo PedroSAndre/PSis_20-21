@@ -113,6 +113,7 @@ int main(int argc, char ** argv)
                 printf("No response from Auth server\n");
             }else if(aux==1){
                     //CONFLICT HERE
+                    kick_out_clients(state,all_clients_connected,input_string);
                     if(hashDelete_group_table(groups, input_string) == 0)
                         printf("Group deleted with sucess\n\n");
                     else
@@ -208,7 +209,7 @@ void handleConnection(void *arg)
     int cycle = 1;
     long int value_size = 0;
     pthread_t local_PID;
-    struct key_value * local_key_value_table, *table;
+    struct key_value * local_key_value_table;
 
 
     pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
@@ -223,6 +224,7 @@ void handleConnection(void *arg)
     char * secret;
     char * key;
     char * value;
+    int ison=1;
     group_id = malloc(group_id_max_size*sizeof(char));
     secret = malloc(secret_max_size*sizeof(char));
     key = malloc(key_max_size*sizeof(char));
@@ -246,16 +248,17 @@ void handleConnection(void *arg)
         pthread_exit(NULL);
     }
     
+
     answer=AuthServerCom(CMP,group_id,secret,Authserver_sock,Authserver_sock_addr);
     answer--;
     write(client_sock,&answer,sizeof(answer));
 
     if (answer==0){
 
-        if(add_status(state, local_PID, client_PID, &all_clients_connected) == -1)
+        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,&ison) == -1)
             printf("Error updating status");
         //Connection cycle
-        while(server_status == 1 && cycle)
+        while(server_status == 1 && cycle && ison)
         {
             answer = WAIT;
             key[0] = '\0';
@@ -268,7 +271,6 @@ void handleConnection(void *arg)
                 read(client_sock,&value_size,sizeof(value_size));
                 value = malloc(value_size*sizeof(char));
                 read(client_sock,value,value_size*sizeof(char));
-                //CONFLICT HERE
                 answer = hashInsert_key_value(local_key_value_table,key,value);
                 answer++;
                 write(client_sock,&answer,sizeof(answer));
@@ -301,6 +303,9 @@ void handleConnection(void *arg)
                 read(client_sock,key,key_max_size*sizeof(char));
                 answer=hashWaitChange_key_value(local_key_value_table,key);
                 
+                write(client_sock,&answer,sizeof(answer));
+            }else{
+                answer=-3;
                 write(client_sock,&answer,sizeof(answer));
             }
         }

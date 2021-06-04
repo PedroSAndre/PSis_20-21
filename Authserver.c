@@ -216,7 +216,7 @@ struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     }
     Previous=Main;
     if(Previous==NULL){
-        
+
     }
     while(Previous->next!=Current){
         Previous=Previous->next;
@@ -226,12 +226,7 @@ struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     return Main;
 }
 
-char * generate_secret(void){
-    char * secret=malloc(key_max_size*sizeof(char));
-    if(secret==NULL){
-        perror("Error alocating memory");
-        return NULL;
-    }
+void generate_secret(char * secret){
 
 
     for(int i=0;i<key_max_size-1;i++){
@@ -239,7 +234,7 @@ char * generate_secret(void){
     }
     secret[key_max_size-1]='\0';
 
-    return secret;
+    return;
 
 }
 

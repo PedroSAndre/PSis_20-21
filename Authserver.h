@@ -48,6 +48,6 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 //If the message has already been analysed, it can be deleted
 struct Message * deleteMessage(struct Message * Current, struct Message * Main);
 
-char * generate_secret(void);
+void generate_secret(char * secret);
 
 #endif

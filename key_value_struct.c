@@ -48,11 +48,11 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
     {
         if(strcmp(table[aux].key, key) == 0)
         {
+            pthread_mutex_trylock(&(table[aux].mutex));
             if(table[aux].signal==1 && strcmp(table[aux].value, value)!=0){
-                pthread_mutex_trylock(&(table[aux].mutex));
                 pthread_cond_signal(&(table[aux].cond));
-                pthread_mutex_unlock(&(table[aux].mutex));
             }
+            pthread_mutex_unlock(&(table[aux].mutex));
             //Continue Write
             //Stop Read
             free(table[aux].value); //in case of overwriting
@@ -78,11 +78,11 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
         }
         if(strcmp(aux2->key, key) == 0)
         {
+            pthread_mutex_trylock(&(aux2->mutex));
             if(aux2->signal==1&& strcmp(table[aux].value, value)!=0){
-                pthread_mutex_trylock(&(aux2->mutex));
                 pthread_cond_signal(&(aux2->cond));
-                pthread_mutex_unlock(&(aux2->mutex));
             }
+            pthread_mutex_unlock(&(aux2->mutex));
             //Continue write
             //Stop Read
             strcpy(aux2->value, value);
@@ -156,13 +156,13 @@ int hashDelete_key_value(struct key_value * table, char * key)
     aux = hashCode_key_value(key);
     //Stop Read
     
+    pthread_mutex_lock(&(table[aux].mutex));
     if(strcmp(table[aux].key, key) == 0) //Same key
     {
-        if(table[aux].signal==1){
-            pthread_mutex_trylock(&(table[aux].mutex));
+        if(table[aux].signal==1){ 
             pthread_cond_signal(&(table[aux].cond));
-            pthread_mutex_unlock(&(table[aux].mutex));
         }
+        
 
         
         if(table[aux].next == NULL)
@@ -170,6 +170,7 @@ int hashDelete_key_value(struct key_value * table, char * key)
             strcpy(table[aux].key, "\0");
             free(table[aux].value);
             table[aux].value = NULL;
+            pthread_mutex_unlock(&(table[aux].mutex));
         }
         else
         {//puts the last element first
@@ -189,25 +190,33 @@ int hashDelete_key_value(struct key_value * table, char * key)
     else
     {//needs to find it in the linked list
         if(strcmp(table[aux].key,"\0") == 0)
+            pthread_mutex_unlock(&(table[aux].mutex));
             return -1;
         aux2 = table + aux*sizeof(struct key_value);
-        while(aux2->next != NULL && strcmp(aux2->key, key) != 0)
-        {
+        if(aux2->next != NULL && strcmp(aux2->key, key) != 0){
             aux3 = aux2;
             aux2 = aux2->next;
+            pthread_mutex_lock(&(aux2->mutex));
+        }
+        while(aux2->next != NULL && strcmp(aux2->key, key) != 0)
+        {
+            pthread_mutex_unlock(&(aux3->mutex));
+            aux3 = aux2;
+            aux2 = aux2->next;
+            pthread_mutex_lock(&(aux2->mutex));
         }
         if(strcmp(aux2->key, key) == 0)
         {
             if(aux2->signal==1){
-                pthread_mutex_trylock(&(table[aux]).mutex);
-                pthread_cond_signal(&(table[aux]).cond);
-                pthread_mutex_unlock(&(table[aux]).mutex);
+                pthread_cond_signal(&(aux2->cond));
             }
 
             if(aux2->next == NULL)
             {
+                pthread_mutex_unlock(&(aux2->mutex));
                 free(aux2);
                 aux3->next = NULL;
+                pthread_mutex_unlock(&(aux3->mutex));
             }
             else
             {
@@ -227,9 +236,11 @@ int hashDelete_key_value(struct key_value * table, char * key)
         }
         else
         {
+            
             return -1;
         }   
     }
+    
     return 0;
 }
 

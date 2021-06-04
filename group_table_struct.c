@@ -113,6 +113,7 @@ int hashDelete_group_table(struct group_table * table, char * group)
     int aux;
     struct group_table * aux2;
     struct group_table * aux3;
+    struct group_table * aux4;
     aux = hashCode_group_table(group);
     if(strcmp(table[aux].group, group) == 0) //Same key
     {
@@ -141,7 +142,7 @@ int hashDelete_group_table(struct group_table * table, char * group)
     {//needs to find it in the linked list
         if(strcmp(table[aux].group,"\0") == 0)
             return -1;
-        aux2 = table + aux*sizeof(struct group_table);
+        aux2 = &(table[aux]);
         while(aux2->next != NULL && strcmp(aux2->group, group) != 0)
         {
             aux3 = aux2;
@@ -156,16 +157,16 @@ int hashDelete_group_table(struct group_table * table, char * group)
             }
             else
             {
-                table = aux2; //reusing provided variable
+                aux4 = aux2;
                 aux2 = aux2->next;
-                aux3 = table;
+                aux3 = aux4;
                 while(aux2->next != NULL)
                 {
                     aux3 = aux2;
                     aux2 = aux2->next;
                 }
-                strcpy(table->group, aux2->group);
-                table->key_value_table = aux2->key_value_table;
+                strcpy(aux4->group, aux2->group);
+                aux4->key_value_table = aux2->key_value_table;
                 free(aux2);
                 aux3->next = NULL;
             }

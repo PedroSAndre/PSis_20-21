@@ -107,6 +107,7 @@ int main(int argc, char ** argv)
         {
             printf("Delete the group with ID: ");
             fgets(input_string, group_id_max_size, stdin);
+            input_string[strlen(input_string)-1]='\0';
             aux=AuthServerCom(DEL,input_string,secret,Authserver_sock,Authserver_sock_addr);
             if(aux==0 ){
                 printf("No response from Auth server\n");

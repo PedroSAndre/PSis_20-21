@@ -122,15 +122,13 @@ char * hashGet_key_value(struct key_value * table, char * key)
     }
     else
     {
-        aux2 = table + aux*sizeof(struct key_value);
+        aux2 = &(table[aux]);
         while(aux2->next != NULL && strcmp(aux2->key, key) != 0)
         {
             aux2 = aux2->next;
         }
         if(strcmp(aux2->key, key) == 0)
         {
-            //Continue
-            ///////////////////////////////NOT GOOD/////////////////////////////
             aux3=malloc(strlen(aux2->value)*sizeof(char));
             strcpy(aux3,aux2->value);
             pthread_mutex_unlock(&(table[aux].mutex));
@@ -167,7 +165,7 @@ int hashDelete_key_value(struct key_value * table, char * key)
             strcpy(table[aux].key, "\0");
             free(table[aux].value);
             table[aux].value = NULL;
-            pthread_mutex_unlock(&(table[aux].mutex));
+            
         }
         else
         {
@@ -188,14 +186,11 @@ int hashDelete_key_value(struct key_value * table, char * key)
         if(aux2->next != NULL && strcmp(aux2->key, key) != 0){
             aux3 = aux2;
             aux2 = aux2->next;
-            pthread_mutex_lock(&(aux2->mutex));
         }
         while(aux2->next != NULL && strcmp(aux2->key, key) != 0)
         {
-            pthread_mutex_unlock(&(aux3->mutex));
             aux3 = aux2;
             aux2 = aux2->next;
-            pthread_mutex_lock(&(aux2->mutex));
         }
         if(strcmp(aux2->key, key) == 0)
         {
@@ -205,10 +200,8 @@ int hashDelete_key_value(struct key_value * table, char * key)
 
             if(aux2->next == NULL)
             {
-                pthread_mutex_unlock(&(aux2->mutex));
                 free(aux2);
                 aux3->next = NULL;
-                pthread_mutex_unlock(&(aux3->mutex));
             }
             else
             {
@@ -222,10 +215,11 @@ int hashDelete_key_value(struct key_value * table, char * key)
         }
         else
         {
+        pthread_mutex_unlock(&(table[aux].mutex));
         return -1;
         }   
     }
-    
+    pthread_mutex_unlock(&(table[aux].mutex));
     return 0;
 }
 

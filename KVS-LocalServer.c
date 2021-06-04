@@ -95,7 +95,7 @@ int main(int argc, char ** argv)
             }else{
                 printf("Group %s Created\n",input_string);
 
-                printf("Secret of group %s%s\n",input_string,secret);
+                printf("Secret of group %s\n%s\n",input_string,secret);
                 //CONFLICT HERE
                 if(hashInsert_group_table(groups, input_string) == 0)
                     printf("Group created with sucess\n\n");
@@ -212,12 +212,6 @@ void handleConnection(void *arg)
     struct key_value * local_key_value_table;
 
 
-    pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
-    pthread_cond_init(&cond,NULL); 
-    pthread_mutex_init(&mutex,NULL);
-
     
 
     char * group_id;
@@ -273,6 +267,9 @@ void handleConnection(void *arg)
                 read(client_sock,value,value_size*sizeof(char));
                 answer = hashInsert_key_value(local_key_value_table,key,value);
                 answer++;
+                if(!ison){
+                    answer=-10;
+                }
                 write(client_sock,&answer,sizeof(answer));
                 free(value);
             }

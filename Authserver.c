@@ -215,6 +215,9 @@ struct Message * deleteMessage(struct Message * Current, struct Message * Main){
         return NULL;
     }
     Previous=Main;
+    if(Previous==NULL){
+        
+    }
     while(Previous->next!=Current){
         Previous=Previous->next;
     }

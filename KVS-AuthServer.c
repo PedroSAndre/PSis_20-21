@@ -113,7 +113,7 @@ int main(int argc, char**argv)
             //Delete entry for group
             }else if(Current->request==DEL){
                 answer=DeleteEntry(Current->group);
-                Main=deleteMessage(Current,Main);
+                free(Current);
             }else if(Current->request==CMP){
                 if(strcmp(Current->secret,"\0")!=0){
                     answer=compareHashGroup(Current->group,Current->secret);

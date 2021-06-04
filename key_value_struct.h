@@ -33,7 +33,7 @@ char * hashGet_key_value(struct key_value * table, char * key);
 int hashDelete_key_value(struct key_value * table, char * key);
 
 //Frees the memory on the end of execution (returns 0 in sucess, -1 if failed to find)
-int hashFree_key_value(struct key_value * table);
+void hashFree_key_value(struct key_value * table);
 
 
 int hashWaitChange_key_value(struct key_value * table, char * key);

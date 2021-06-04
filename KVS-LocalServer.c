@@ -152,6 +152,8 @@ int main(int argc, char ** argv)
 
     pthread_join(acepting_connections_thread_ptid,NULL);
 
+    hashFree_group_table(groups);
+
     printf("Server terminated sucessfully\n");
 
     return 0;

@@ -28,5 +28,5 @@ struct key_value * hashGet_group_table(struct group_table * table, char * group)
 int hashDelete_group_table(struct group_table * table, char * group);
 
 //Frees the memory on the end of execution (returns 0 in sucess, -1 if failed to find)
-int hashFree_group_table(struct key_value * table);
+void hashFree_group_table(struct group_table * table);
 #endif

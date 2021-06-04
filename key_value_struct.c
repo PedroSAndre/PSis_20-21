@@ -244,7 +244,27 @@ int hashDelete_key_value(struct key_value * table, char * key)
     return 0;
 }
 
-int hashFree_key_value(struct key_value * table);
+void hashFree_key_value(struct key_value * table)
+{
+    struct key_value * aux;
+    struct key_value * aux2;
+    for(int i=key_value_table_size-1;i>=0;i--)
+    {
+        if(table[i].next != NULL)
+        {
+            aux = table[i].next;
+            while(aux->next != NULL)
+            {
+                aux2 = aux;
+                aux = aux->next;
+                free(aux2);
+            }
+            free(aux);
+        }
+    }
+    free(table);
+    return;
+}
 
 
 

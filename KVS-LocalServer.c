@@ -257,74 +257,53 @@ void handleConnection(void *arg)
         //Connection cycle
         while(server_status == 1 && cycle && ison)
         {
-                answer = WAIT;
-                key[0] = '\0';
-                read(client_sock,&answer,sizeof(answer));
-                if(answer == WAIT)
-                    continue;
-                else if(answer == PUT)
-                {
-                    read(client_sock,key,key_max_size*sizeof(char));
-                    read(client_sock,&value_size,sizeof(value_size));
-                    value = malloc(value_size*sizeof(char));
-                    read(client_sock,value,value_size*sizeof(char));
-                    answer = hashInsert_key_value(*local_key_value_table,key,value);
-                    answer++;
-                    write(client_sock,&answer,sizeof(answer));
-                    free(value);
-                }
-                else if(answer == GET)
-                {
-                    //CONFLICT HERE
-                    read(client_sock,key,key_max_size*sizeof(char));
-                    //Begin Write LOCK(&group_delete)
-                    if(*local_key_value_table!=NULL){
-                        value = hashGet_key_value(*local_key_value_table,key);
-                        //End Write LOCK
-                    }else{
-                        //End Write LOCK
-                        break;
-                    }
-                    if(value == NULL)
-                        value_size = 0;
-                    else
-                        value_size = strlen(value);
-                    write(client_sock,&value_size,sizeof(value_size));
-                    write(client_sock,value,value_size*sizeof(char));
-                }
-                else if(answer == DEL)
-                {
-                    //CONFLICT HERE
-                    read(client_sock,key,key_max_size*sizeof(char));
-                    //Begin Write LOCK(&group_delete)
-                    if(*local_key_value_table!=NULL){
-                        answer = hashDelete_key_value(*local_key_value_table,key);
-                        //End Write LOCK
-                    }else{
-                        //End Write LOCK
-                        break;
-                    }
-                    answer++; //Updating from one format to another
-                    write(client_sock,&answer,sizeof(answer));
-                }
-                else if(answer == CLS)
-                {
-                    cycle = 0;
-                }else if(answer==CALL){
-                    read(client_sock,key,key_max_size*sizeof(char));
-                    //Begin Write LOCK(&group_delete)
-                    if(*local_key_value_table!=NULL){
-                        answer=hashWaitChange_key_value(*local_key_value_table,key);
-                        //End Write LOCK
-                    }else{
-                        //End Write LOCK
-                        break;
-                    }
-                    
-                    write(client_sock,&answer,sizeof(answer));
-                }
+            answer = WAIT;
+            key[0] = '\0';
+            read(client_sock,&answer,sizeof(answer));
+            if(answer == WAIT)
+                continue;
+            else if(answer == PUT)
+            {
+                read(client_sock,key,key_max_size*sizeof(char));
+                read(client_sock,&value_size,sizeof(value_size));
+                value = malloc(value_size*sizeof(char));
+                read(client_sock,value,value_size*sizeof(char));
+                answer = hashInsert_key_value(*local_key_value_table,key,value);
+                answer++;
+                write(client_sock,&answer,sizeof(answer));
+                free(value);
+            }
+            else if(answer == GET)
+            {
+                //CONFLICT HERE
+                read(client_sock,key,key_max_size*sizeof(char));
+                value = hashGet_key_value(*local_key_value_table,key);
+                if(value == NULL)
+                    value_size = 0;
+                else
+                    value_size = strlen(value);
+                write(client_sock,&value_size,sizeof(value_size));
+                write(client_sock,value,value_size*sizeof(char));
+            }
+            else if(answer == DEL)
+            {
+                //CONFLICT HERE
+                read(client_sock,key,key_max_size*sizeof(char));
+                answer = hashDelete_key_value(*local_key_value_table,key);
+                answer++; //Updating from one format to another
+                write(client_sock,&answer,sizeof(answer));
+            }
+            else if(answer == CLS)
+            {
+                cycle = 0;
+            }else if(answer==CALL){
+                read(client_sock,key,key_max_size*sizeof(char));
+                answer=hashWaitChange_key_value(*local_key_value_table,key);
+                
+                write(client_sock,&answer,sizeof(answer));
             }else{
-
+                answer=-3;
+                write(client_sock,&answer,sizeof(answer));
             }
         }
     }

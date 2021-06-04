@@ -179,4 +179,28 @@ int hashDelete_group_table(struct group_table * table, char * group)
     return 0;
 }
 
-int hashFree_group_table(struct key_value * table);
+void hashFree_group_table(struct group_table * table)
+{
+    struct group_table * aux;
+    struct group_table * aux2;
+    for(int i=n_groups_max-1;i>=0;i--)
+    {
+        if(table[i].next != NULL)
+        {
+            aux = table[i].next;
+            while(aux->next != NULL)
+            {
+                aux2 = aux;
+                aux = aux->next;
+                hashFree_key_value(aux2->key_value_table);
+                free(aux2);
+            }
+            hashFree_key_value(aux->key_value_table);
+            free(aux);
+        }
+        if(table[i].key_value_table != NULL)
+            hashFree_key_value(table[i].key_value_table);
+    }
+    free(table);
+    return;
+}

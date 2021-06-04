@@ -20,6 +20,7 @@ int main(int argc, char**argv)
 
 
     char * group=malloc(group_id_max_size*sizeof(char));
+    char newsecret[secret_max_size];
     char * secret;
     char * buf;
 
@@ -86,15 +87,15 @@ int main(int argc, char**argv)
                 answer=-1;
             }
             if (Current->request==PUT){
-                secret=generate_secret();
-                if(secret==NULL){
+                generate_secret(newsecret);
+                if(newsecret==NULL){
                     answer=PUT;
                 }
-                strcpy(Current->secret,secret);
+                strcpy(Current->secret,newsecret);
                 if(CreateUpdateEntry(Current->group,Current->secret)==1){
 
-                    sendto(kvs_authserver_sock,secret,secret_max_size*sizeof(char),0,(struct sockaddr * )&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
-                    printf("Secret:%s\n",secret);
+                    sendto(kvs_authserver_sock,newsecret,secret_max_size*sizeof(char),0,(struct sockaddr * )&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
+                    printf("Secret:%s\n",newsecret);
 
                     free(Current);
                     answer=GET;

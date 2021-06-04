@@ -234,7 +234,7 @@ void generate_secret(char * secret){
     }
     secret[key_max_size-1]='\0';
 
-    return NULL;
+    return;
 
 }
 

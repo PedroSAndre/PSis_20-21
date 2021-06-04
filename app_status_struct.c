@@ -29,7 +29,6 @@ int add_status(struct app_status * dummy, pthread_t process_ptid, int client_pti
     dummy[*clients_connected].connection_time = time(NULL);
     dummy[*clients_connected].close_time = -1;
     strcpy(dummy[*clients_connected].group,group);
-    dummy[*clients_connected].close_time = -1;
     dummy[*clients_connected].ison = ison;
     return 0;
 }
@@ -68,7 +67,7 @@ void print_status(struct app_status * dummy, int clients_connected)
     printf("\n");
 }
 
-void Kick_out_clients(struct app_status * dummy, int clients_connected,char * group)
+void kick_out_clients(struct app_status * dummy, int clients_connected,char * group)
 {
     int j[clients_connected];
     int a=0;
@@ -81,7 +80,7 @@ void Kick_out_clients(struct app_status * dummy, int clients_connected,char * gr
             a++;
         }
     }
-    printf("Waiting for clients to be disconnected...\n")
+    printf("Waiting for clients to be disconnected...\n");
     while(aux){
         aux=0;
         for(int i=0;i<a;i++){
@@ -90,5 +89,6 @@ void Kick_out_clients(struct app_status * dummy, int clients_connected,char * gr
             }
         }
     }
+    return;
 
 }

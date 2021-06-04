@@ -112,7 +112,7 @@ int main(int argc, char ** argv)
                 printf("No response from Auth server\n");
             }else if(aux==1){
                     //CONFLICT HERE
-                    Kick_out_clients(state,all_clients_connected,input_string);
+                    kick_out_clients(state,all_clients_connected,input_string);
                     if(hashDelete_group_table(groups, input_string) == 0)
                         printf("Group deleted with sucess\n\n");
                     else
@@ -206,7 +206,7 @@ void handleConnection(void *arg)
     int cycle = 1;
     long int value_size = 0;
     pthread_t local_PID;
-    struct key_value ** local_key_value_table, *table;
+    struct key_value * local_key_value_table;
 
 
     pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
@@ -236,8 +236,8 @@ void handleConnection(void *arg)
 
 
     //CONFLICT HERE
-    *local_key_value_table = hashGet_group_table(groups, group_id);
-    if(*local_key_value_table == NULL)
+    local_key_value_table = hashGet_group_table(groups, group_id);
+    if(local_key_value_table == NULL)
     {
         answer = -1;
         write(client_sock,&answer,sizeof(answer));
@@ -252,7 +252,7 @@ void handleConnection(void *arg)
 
     if (answer==0){
 
-        if(add_status(state, local_PID, client_PID, &all_clients_connected,&ison) == -1)
+        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,&ison) == -1)
             printf("Error updating status");
         //Connection cycle
         while(server_status == 1 && cycle && ison)
@@ -268,7 +268,7 @@ void handleConnection(void *arg)
                 read(client_sock,&value_size,sizeof(value_size));
                 value = malloc(value_size*sizeof(char));
                 read(client_sock,value,value_size*sizeof(char));
-                answer = hashInsert_key_value(*local_key_value_table,key,value);
+                answer = hashInsert_key_value(local_key_value_table,key,value);
                 answer++;
                 write(client_sock,&answer,sizeof(answer));
                 free(value);
@@ -277,7 +277,7 @@ void handleConnection(void *arg)
             {
                 //CONFLICT HERE
                 read(client_sock,key,key_max_size*sizeof(char));
-                value = hashGet_key_value(*local_key_value_table,key);
+                value = hashGet_key_value(local_key_value_table,key);
                 if(value == NULL)
                     value_size = 0;
                 else
@@ -289,7 +289,7 @@ void handleConnection(void *arg)
             {
                 //CONFLICT HERE
                 read(client_sock,key,key_max_size*sizeof(char));
-                answer = hashDelete_key_value(*local_key_value_table,key);
+                answer = hashDelete_key_value(local_key_value_table,key);
                 answer++; //Updating from one format to another
                 write(client_sock,&answer,sizeof(answer));
             }
@@ -298,7 +298,7 @@ void handleConnection(void *arg)
                 cycle = 0;
             }else if(answer==CALL){
                 read(client_sock,key,key_max_size*sizeof(char));
-                answer=hashWaitChange_key_value(*local_key_value_table,key);
+                answer=hashWaitChange_key_value(local_key_value_table,key);
                 
                 write(client_sock,&answer,sizeof(answer));
             }else{

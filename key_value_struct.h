@@ -36,5 +36,5 @@ int hashDelete_key_value(struct key_value * table, char * key);
 int hashFree_key_value(struct key_value * table);
 
 
-struct key_value * hashGetTable_key_value(struct key_value * table, char * key);
+int hashWaitChange_key_value(struct key_value * table, char * key);
 #endif

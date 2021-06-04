@@ -42,20 +42,25 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
     int aux;
     struct key_value * aux2;
     aux = hashCode_key_value(key);
+
+    //Stop Write
     if(strcmp(table[aux].key, "\0") == 0 || strcmp(table[aux].key, key) == 0) //Same key or no element
     {
         if(strcmp(table[aux].key, key) == 0)
         {
-            if(table[aux].signal==1){
+            if(table[aux].signal==1 && strcmp(table[aux].value, value)!=0){
                 pthread_mutex_trylock(&(table[aux].mutex));
                 pthread_cond_signal(&(table[aux].cond));
                 pthread_mutex_unlock(&(table[aux].mutex));
             }
+            //Continue Write
+            //Stop Read
             free(table[aux].value); //in case of overwriting
         }
         else
         {
-
+            //Continue Write
+            //Stop Read
             pthread_mutex_init(&(table[aux].mutex),NULL);
             pthread_cond_init(&(table[aux].cond),NULL);
 
@@ -73,15 +78,20 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
         }
         if(strcmp(aux2->key, key) == 0)
         {
-            if(aux2->signal==1){
+            if(aux2->signal==1&& strcmp(table[aux].value, value)!=0){
                 pthread_mutex_trylock(&(aux2->mutex));
                 pthread_cond_signal(&(aux2->cond));
                 pthread_mutex_unlock(&(aux2->mutex));
             }
+            //Continue write
+            //Stop Read
             strcpy(aux2->value, value);
+
         }
         else
         {
+            //Continue write
+            //Stop Read
             aux2->next = malloc(sizeof(struct key_value));
             aux2 = aux2->next;
             if(aux2 == NULL)
@@ -96,8 +106,11 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
             strcpy(aux2->key, key);
             aux2->value = malloc(strlen(value)*sizeof(char));
             strcpy(aux2->value, value);
+
         }   
     }
+    //Continue Read
+    
 
     return 0;
 }
@@ -107,8 +120,11 @@ char * hashGet_key_value(struct key_value * table, char * key)
     int aux;
     struct key_value * aux2;
     aux = hashCode_key_value(key);
+    //Stop Writing
     if(strcmp(table[aux].key, key) == 0) //Same key
     {
+        //Continue 
+        ///////////////////////////////NOT GOOD/////////////////////////////
         return table[aux].value;
     }
     else
@@ -120,10 +136,13 @@ char * hashGet_key_value(struct key_value * table, char * key)
         }
         if(strcmp(aux2->key, key) == 0)
         {
+            //Continue
+            ///////////////////////////////NOT GOOD/////////////////////////////
             return aux2->value;
         }
         else
         {
+            //Continue
             return NULL;
         }   
     }
@@ -135,6 +154,8 @@ int hashDelete_key_value(struct key_value * table, char * key)
     struct key_value * aux2;
     struct key_value * aux3;
     aux = hashCode_key_value(key);
+    //Stop Read
+    
     if(strcmp(table[aux].key, key) == 0) //Same key
     {
         if(table[aux].signal==1){
@@ -142,6 +163,7 @@ int hashDelete_key_value(struct key_value * table, char * key)
             pthread_cond_signal(&(table[aux].cond));
             pthread_mutex_unlock(&(table[aux].mutex));
         }
+
         
         if(table[aux].next == NULL)
         {
@@ -215,14 +237,20 @@ int hashFree_key_value(struct key_value * table);
 
 
 
-struct key_value * hashGetTable_key_value(struct key_value * table, char * key)
+int hashWaitChange_key_value(struct key_value * table, char * key)
 {
     int aux;
     struct key_value * aux2;
     aux = hashCode_key_value(key);
     if(strcmp(table[aux].key, key) == 0) //Same key
     {
-        return &(table[aux]);
+        pthread_mutex_trylock(&(table[aux].mutex));
+        if(aux2->signal==0){
+            aux2->signal=1;
+        }
+        pthread_cond_wait(&(aux2->cond),&(table[aux].mutex));
+        pthread_mutex_unlock(&(aux2->mutex));
+        return 1;
     }
     else
     {
@@ -233,11 +261,17 @@ struct key_value * hashGetTable_key_value(struct key_value * table, char * key)
         }
         if(strcmp(aux2->key, key) == 0)
         {
-            return aux2;
+            pthread_mutex_trylock(&(table->mutex));
+            if(aux2->signal==0){
+                aux2->signal=1;
+            }
+            pthread_cond_wait(&(aux2->cond),&(aux2->mutex));
+            pthread_mutex_unlock(&(aux2->mutex));
+            return 1;
         }
         else
         {
-            return NULL;
+            return 0;
         }   
     }
 }

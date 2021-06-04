@@ -296,19 +296,7 @@ void handleConnection(void *arg)
                 cycle = 0;
             }else if(answer==CALL){
                 read(client_sock,key,key_max_size*sizeof(char));
-                table=hashGetTable_key_value(local_key_value_table,key);
-                
-                if(table==NULL){ 
-                    answer=0;
-                }else{
-                    pthread_mutex_trylock(&(table->mutex));
-                    if(table->signal==0){
-                        table->signal=1;
-                    }
-                    pthread_cond_wait(&(table->cond),&(table->mutex));
-                    pthread_mutex_unlock(&(table->mutex));
-                    answer=1;
-                }
+                answer=hashWaitChange_key_value(local_key_value_table,key);
                 
                 write(client_sock,&answer,sizeof(answer));
             }

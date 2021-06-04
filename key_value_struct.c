@@ -173,18 +173,13 @@ int hashDelete_key_value(struct key_value * table, char * key)
             pthread_mutex_unlock(&(table[aux].mutex));
         }
         else
-        {//puts the last element first
+        {
             aux2 = table[aux].next;
-            aux3 = &(table[aux]);
-            while(aux2->next != NULL)
-            {
-                aux3 = aux2;
-                aux2 = aux2->next;
-            }
+            table[aux].next = aux2->next;
             strcpy(table[aux].key, aux2->key);
-            strcpy(table[aux].value, aux2->value);
+            table[aux].value = aux2->value;
+            free(aux2->value);
             free(aux2);
-            aux3->next = NULL;
         }
     }
     else
@@ -220,24 +215,17 @@ int hashDelete_key_value(struct key_value * table, char * key)
             }
             else
             {
-                table = aux2; //reusing provided variable
-                aux2 = aux2->next;
-                aux3 = table;
-                while(aux2->next != NULL)
-                {
-                    aux3 = aux2;
-                    aux2 = aux2->next;
-                }
-                strcpy(table->key, aux2->key);
-                strcpy(table->value, aux2->value);
+                aux3 = aux2->next;
+                strcpy(aux3->key, aux2->key);
+                aux3->value = aux2->value;
+                aux3->next = aux2->next;
+                free(aux2->value);
                 free(aux2);
-                aux3->next = NULL;
             }
         }
         else
         {
-            
-            return -1;
+        return -1;
         }   
     }
     

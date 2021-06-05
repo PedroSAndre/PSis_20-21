@@ -11,13 +11,12 @@ struct app_status
     time_t connection_time;
     time_t close_time;
     char group[group_id_max_size];
-    int * ison;
 };
 
 struct app_status * inicialize_app_status(void);
 int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group,int*ison, char * deleting_group);
 int close_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int clients_connected);
 void print_status(struct app_status * dummy, int clients_connected);
-void send_kick_out_order(struct app_status * dummy, int clients_connected,char * group);
+void wait_to_group_clients_to_disconect(struct app_status * dummy, int clients_connected, char * group);
 
 #endif

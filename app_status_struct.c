@@ -14,7 +14,6 @@ struct app_status * inicialize_app_status(void)
     dummy[0].client_ptid = -1;
     dummy[0].connection_time = time(NULL); //start of the server
     dummy[0].close_time = -1;
-    dummy[0].ison = 0;
 
     return dummy;
 }
@@ -34,7 +33,6 @@ int add_status(struct app_status * dummy, pthread_t process_ptid, int client_pti
     dummy[*clients_connected].connection_time = time(NULL);
     dummy[*clients_connected].close_time = -1;
     strcpy(dummy[*clients_connected].group,group);
-    dummy[*clients_connected].ison = ison;
     return SUCCESS;
 }
 
@@ -73,18 +71,21 @@ void print_status(struct app_status * dummy, int clients_connected)
     return;
 }
 
-void send_kick_out_order(struct app_status * dummy, int clients_connected,char * group)
+void wait_to_group_clients_to_disconect(struct app_status * dummy, int clients_connected, char * group)
 {
-    int j[clients_connected];
-    int a=0;
     int aux=1;
-    for(int i = 0;i<clients_connected;i++)
+    while(aux)
     {
-        if(strcmp(dummy[i].group,group)==0){
-            *(dummy[i].ison)=0;
-            j[a]=i;
-            a++;
+        aux=0;
+        for(int i=1;i<=clients_connected;i++)
+        {
+            if(strcmp(dummy[i].group,group)==0)
+            {
+                if(dummy[i].close_time==-1)
+                {
+                    aux=1;
+                }
+            }
         }
     }
-    return;
 }

@@ -306,11 +306,6 @@ void handleConnection(void *arg)
                 read(client_sock,value,value_size*sizeof(char));
                 answer = hashInsert_key_value(local_key_value_table,key,value);
                 answer++;
-                pthread_mutex_lock(&acess_group);
-                if(!ison){
-                    answer=DISCONNECTED;
-                }
-                pthread_mutex_unlock(&acess_group);
                 write(client_sock,&answer,sizeof(answer));
                 
                 free(value);
@@ -334,9 +329,6 @@ void handleConnection(void *arg)
                 read(client_sock,key,key_max_size*sizeof(char));
                 answer = hashDelete_key_value(local_key_value_table,key);
                 answer++; //Updating from one format to another
-                if(!ison){
-                    answer=DISCONNECTED;
-                }
                 write(client_sock,&answer,sizeof(answer));
             }
             else if(answer == CLS)
@@ -345,15 +337,9 @@ void handleConnection(void *arg)
             }else if(answer==CALL){
                 read(client_sock,key,key_max_size*sizeof(char));
                 answer=hashWaitChange_key_value(local_key_value_table,key);
-                if(!ison){
-                    answer=DISCONNECTED;
-                }
                 write(client_sock,&answer,sizeof(answer));
             }else{
                 answer=WRGREQ;
-                if(!ison){
-                    answer=DISCONNECTED;
-                }
                 write(client_sock,&answer,sizeof(answer));
             }
         }

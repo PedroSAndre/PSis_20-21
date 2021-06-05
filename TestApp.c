@@ -67,7 +67,7 @@ int main(void)
                         printf("User: ");
                         fgets(buf, input_string_max_size, stdin);
                         sscanf(buf,"%c\n",&selector);
-                        if(selector=='1'){
+                        if(selector=='1'){//Put value
                             printf("Insert the key you want to access: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
@@ -81,7 +81,7 @@ int main(void)
                             }else{
                                 printf("\nSomething went wrong\n");
                             }
-                        }else if(selector=='2'){
+                        }else if(selector=='2'){//Get value
                             printf("Insert the key of the entry you want to access: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
@@ -91,7 +91,7 @@ int main(void)
                             }else{
                                 printf("Something went wrong\n");
                             }
-                        }else if(selector=='3'){
+                        }else if(selector=='3'){//Delete value
                             printf("Insert the key of the entry you want to delete: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
@@ -100,7 +100,7 @@ int main(void)
                             }else{
                                 printf("Something went wrong\n");
                             }
-                        }else if(selector=='4'){
+                        }else if(selector=='4'){//Register callback
                             printf("Insert the key of the entry you want to monitor: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
@@ -109,7 +109,7 @@ int main(void)
                             {
                                 printf("Something went wrong\n");
                             }
-                        }else if(selector == '5'){
+                        }else if(selector == '5'){//Close connection
                             printf("Are you sure you want to leave the connection to group %s?\n",group);
                             printf("User: (y/n)");
                             fgets(buf, input_string_max_size, stdin);

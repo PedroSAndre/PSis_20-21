@@ -7,10 +7,13 @@
 int client_sock;
 
 /*establish_conection()
-Como explicado no enunciado, esta função cria uma conecção com o servidor local KVS-LocalServer.
-Retorna 0 em caso de sucesso ou uma flag de erro definida no Basic.h
+This function 
 
-Esta função cria primeiro uma conecção com sockets tipo UNIX STREAM and sends a group and secret which will be subject to authentication. 
+The arguments are the group_id of the group we want to acess on the local server and the secret related to this group.
+
+Returns 0 in case of sucess or a error flag as defined in Basic.h
+
+This function first establishes a connection with the local server using sockets of type UNIX STREAM and sends a group and secret which will be subject to authentication. 
 If authentication was sucessful, returns 0*/
 int establish_connection (char * group_id, char * secret)
 {
@@ -88,7 +91,7 @@ int establish_connection (char * group_id, char * secret)
 Como explicado no enunciado, esta função coloca um valor para o valor key.
 Retorna 1 em caso de sucesso ou uma flag de erro definida no Basic.h
 
-*/
+Começa por verificar se o servidor está preparado, e de seguida manda uma flag PUT, definida no Basic.h. Daqui pode mandar a chave, o com*/
 int put_value(char * key, char * value)
 {
     int buf;
@@ -247,7 +250,7 @@ int register_callback(char * key, void (*callback_function)(char *)){
     }else if(answer==0){
         return DENIED;
     }else{
-        printf("Something went wrong\n");
+        return answer;
     }
     return 1;
 }

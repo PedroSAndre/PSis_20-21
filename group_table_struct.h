@@ -1,7 +1,7 @@
 #ifndef _group_table_struct_
 #define _group_table_struct_
 
-#define group_id_max_size 1024
+#define group_id_max_size 1024 //copied from basic.h
 
 //Struct to be used to store group_table pairs
 

@@ -3,6 +3,8 @@
 
 //Functions used to simplify code
 
+pthread_mutex_t acess_auth;
+
 //Returns binded socket (-1 if error)
 int createAndBind_UNIX_stream_Socket(char * sock_addr)
 {
@@ -62,8 +64,7 @@ int CreateAuthServerSock(char * port_str,char * authaddr_str, int * Authserver_s
     //Creating socket
     *Authserver_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if(*Authserver_sock==-1){
-        perror("Error creating main local server socket\n");
-        return 0;
+        return ERRSCKBIND;
     }
 
     //Binding address
@@ -72,8 +73,7 @@ int CreateAuthServerSock(char * port_str,char * authaddr_str, int * Authserver_s
     Authserver_sock_addr->sin_port=htons(atoi(port_str));
     Authserver_sock_addr->sin_addr.s_addr = inet_addr(authaddr_str);
 
-    return 1;
-
+    return SUCCESS;
 }
 
 
@@ -83,34 +83,33 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
     int answer=0;
     socklen_t len = sizeof(struct sockaddr_in);
 
-
-
     sprintf(buf,"%d:%s",request,group);
 
 
-    //From here until AuthCrit the function is critical and no other thread must comunicate with Auth server
+    pthread_mutex_lock(&acess_auth);
     sendto(Authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,len);
 
-    if(request==GET || request == PUT){
+    if(request==GET || request==PUT)
+    {
         recvfrom(Authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
+        if(strcmp(buf, "\0") == 0 || strlen(buf) != secret_max_size)
+        {
+            pthread_mutex_unlock(&acess_auth);
+            return ERRRD;
+        }
         strcpy(secret,buf);
-        answer=1;
-    }else{
+        answer=SUCCESS;
+    }
+    else
+    {
         recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
         if(request==CMP){
-
-
             strcpy(buf,secret);
             sendto(Authserver_sock,buf,secret_max_size*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,len);
-
-
             recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
-
-    
         }
     }
 
-    //AuthCrit
+    pthread_mutex_unlock(&acess_auth);
     return answer;
-
 }

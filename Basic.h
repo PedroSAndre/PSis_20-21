@@ -39,6 +39,7 @@
 #define CALL 6
 
 //Error Flags
+#define SUCCESS 0
 #define DISCONNECTED -1
 #define ERRSCKCREATION -2
 #define ERRCONNECTING -3

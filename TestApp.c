@@ -78,18 +78,39 @@ int main(void)
                             aux=put_value(key,value);
                             if(aux==1){
                                 printf("\nSuccessfully inserted value\n");
-                            }else{
-                                printf("\nSomething went wrong\n");
-                            }
+                            }else if(aux==DISCONNECTED){
+                                printf("\nLocal Server is disconnecting. Do you want to reconnect to a group?\n");
+                                printf("Retry(r) or Leave(l): ");
+                                fgets(buf, input_string_max_size, stdin);
+                                sscanf(buf,"%c\n",&selector);
+                                if(selector=='r'){
+                                    aux=-7;
+                                }
+                                break;
+                            }else
                         }else if(selector=='2'){//Get value
                             printf("Insert the key of the entry you want to access: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
-                            if(get_value(key,&value)==1){
+                            aux=get_value(key,&value);
+                            if(aux==1){
                                 printf("Value of key %s\n",key);
                                 printf("Value: %s\n",value);
-                            }else{
-                                printf("Something went wrong\n");
+                            }else if(aux==DISCONNECTED){
+                                printf("\nLocal Server is disconnecting. Do you want to reconnect to a group?\n");
+                                printf("Retry(r) or Leave(l): ");
+                                fgets(buf, input_string_max_size, stdin);
+                                sscanf(buf,"%c\n",&selector);
+                                if(selector=='r'){
+                                    aux=-7;
+                                }
+                                break;
+                            }else if(aux==ERRMALLOC){
+                                printf("Shutting down program due to lack of memory\n");
+                                aux=0;
+                                break;
+                            }else if(aux==DENIED){
+                                
                             }
                         }else if(selector=='3'){//Delete value
                             printf("Insert the key of the entry you want to delete: ");

@@ -40,7 +40,7 @@ int CreateUpdateEntry(char * group,char *secret){
     while(Current!=NULL){
 
         if(strcmp(Current->group,group)==0){
-            strcpy(Current->secret,secret);
+            strcpy(secret,Current->secret);
             return 1;
         }
         if(Current->next==NULL){
@@ -68,13 +68,13 @@ int DeleteEntry(char * group){
     Current=Table[TableIndex];
     if(Current==NULL){
         perror("Entry to delete not found");
-        return 0;
+        return DENIED;
     }
 
     if(strcmp(Current->group,group)==0){
         Table[TableIndex]=Current->next;
         free(Current);
-        return 1;
+        return SUCCESS;
     }
     Previous=Current;
     Current=Current->next;
@@ -84,14 +84,13 @@ int DeleteEntry(char * group){
         if(strcmp(Current->group,group)==0){
             Previous->next=Current->next;
             free(Current);
-            return 1; 
+            return SUCCESS; 
         }
         Previous=Current;
         Current=Current->next;
     }
     perror("Entry to delete not found");
-    return 0;
-
+    return DENIED;
 }
 
 char * getGroupSecret(char * group){

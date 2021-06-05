@@ -1,8 +1,7 @@
-
 #ifndef _key_value_struct_
 #define _key_value_struct_
 
-#define key_max_size 512
+#define key_max_size 512 //copied from basic.h
 
 
 //Structs to be used to store key_value pairs and group_table pairs
@@ -34,7 +33,6 @@ int hashDelete_key_value(struct key_value * table, char * key);
 
 //Frees the memory on the end of execution (returns 0 in sucess, -1 if failed to find)
 void hashFree_key_value(struct key_value * table);
-
 
 int hashWaitChange_key_value(struct key_value * table, char * key);
 #endif

@@ -15,7 +15,7 @@ struct app_status
 };
 
 struct app_status * inicialize_app_status(void);
-int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group,int*ison);
+int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group,int*ison, char * deleting_group);
 int close_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int clients_connected);
 void print_status(struct app_status * dummy, int clients_connected);
 void kick_out_clients(struct app_status * dummy, int clients_connected,char * group);

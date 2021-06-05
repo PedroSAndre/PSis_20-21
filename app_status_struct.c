@@ -18,8 +18,11 @@ struct app_status * inicialize_app_status(void)
 }
 
 //Returns 0 in sucess, -1 in failure
-int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group,int*ison)
+int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group,int*ison, char * deleting_group)
 {
+    if(strcmp(deleting_group,group)==0) {
+        return -1;
+    } 
     dummy = realloc(dummy,sizeof(struct app_status));
     if(dummy == NULL)
         return -1;

@@ -20,6 +20,9 @@ struct app_status * state; //struct with all clients and their time information
 int Authserver_sock;
 struct sockaddr_in Authserver_sock_addr;
 
+pthread_mutex_t acess_group;
+char deleting_group[group_id_max_size];
+
 
 int main(int argc, char ** argv)
 {
@@ -40,6 +43,7 @@ int main(int argc, char ** argv)
         return 0;
     }
 
+    strcpy(deleting_group,'\0');
 
     CreateAuthServerSock(argv[2],argv[1],&Authserver_sock,&Authserver_sock_addr);
 
@@ -96,11 +100,12 @@ int main(int argc, char ** argv)
                 printf("Group %s Created\n",input_string);
 
                 printf("Secret of group %s\n%s\n",input_string,secret);
-                //CONFLICT HERE
+                pthread_mutex_lock(&acess_group);
                 if(hashInsert_group_table(groups, input_string) == 0)
                     printf("Group created with sucess\n\n");
                 else
                     printf("Error creating selected group\n\n");
+                pthread_mutex_unlock(&acess_group);
             }
         }
         else if(selector==2)
@@ -113,11 +118,13 @@ int main(int argc, char ** argv)
                 printf("No response from Auth server\n");
             }else if(aux==1){
                     //CONFLICT HERE
+                    pthread_mutex_lock(&acess_group);
                     kick_out_clients(state,all_clients_connected,input_string);
                     if(hashDelete_group_table(groups, input_string) == 0)
                         printf("Group deleted with sucess\n\n");
                     else
                         printf("Error deleting selected group\n\n");
+                    pthread_mutex_lock(&acess_group);
                 
             }else{
                 printf("Something went wrong in the Auth Server\n");
@@ -232,25 +239,36 @@ void handleConnection(void *arg)
     read(client_sock,secret,(secret_max_size*sizeof(char)));
 
 
-    //CONFLICT HERE
-    local_key_value_table = hashGet_group_table(groups, group_id);
-    if(local_key_value_table == NULL)
-    {
-        answer = -1;
-        write(client_sock,&answer,sizeof(answer));
-        close(client_sock);
-        pthread_exit(NULL);
-    }
-    
 
     answer=AuthServerCom(CMP,group_id,secret,Authserver_sock,Authserver_sock_addr);
     answer--;
     write(client_sock,&answer,sizeof(answer));
 
-    if (answer==0){
+    //CONFLICT HERE
 
-        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,&ison) == -1)
+    
+
+
+
+    if (answer==0){
+        pthread_mutex_lock(&acess_group);
+        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,&ison,deleting_group) == -1)
+            pthread_mutex_unlock(&acess_group);
             printf("Error updating status");
+            answer = -1;
+            write(client_sock,&answer,sizeof(answer));
+            close(client_sock);
+            pthread_exit(NULL);
+        local_key_value_table = hashGet_group_table(groups, group_id);
+        pthread_mutex_unlock(&acess_group);
+        if(local_key_value_table == NULL)
+        {
+            answer = -1;
+            write(client_sock,&answer,sizeof(answer));
+            close(client_sock);
+            pthread_exit(NULL);
+        }
+        
         //Connection cycle
         while(server_status == 1 && cycle && ison)
         {

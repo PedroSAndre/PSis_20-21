@@ -55,6 +55,26 @@ int accept_connection_timeout(int * socket_af_stream)
     return client_sock;
 }
 
+int read_timeout(int * socket_af_stream, void * to_read, int size_to_read)
+{
+    struct timeval tmout;
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(*socket_af_stream, &rfds);
+    
+
+    tmout.tv_sec = (long)timeout;
+    tmout.tv_usec = 0;
+
+    if(select(*socket_af_stream+1, &rfds, (fd_set *) 0, (fd_set *) 0, &tmout)>0)
+        read(*socket_af_stream,to_read,size_to_read);
+    else
+    {
+        return ERRTIMEOUT;
+    }
+    return SUCCESS;
+}
+
 
 
 

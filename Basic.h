@@ -50,5 +50,6 @@
 #define ERRCLS -9
 #define ERRSCKBIND -10
 #define WRNGARG -11
+#define WRGREQ -12
 
 #endif

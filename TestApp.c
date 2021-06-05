@@ -30,22 +30,38 @@ int main(void)
             aux=-7;
             while(aux==-7){
 
-                printf("Insert the group you want to access: ");
+                printf("\nInsert the group you want to access: ");
                 fgets(group, group_id_max_size, stdin);
                 group[strlen(group)-1]='\0';
 
-                printf("Insert the secret of the group you inserted: ");
+                printf("Insert the secret of the group: ");
                 fgets(secret, secret_max_size, stdin);
                 secret[strlen(secret)-1]='\0';
 
                 
                 aux=establish_connection(group,secret);
-                if(aux!=0 && aux!=-7){
-                    return -1;
-                }else if(aux==-7){
-                    printf("Wrong group ID or Secret.\nPlease, try again\n");
+                if(aux!=0 && aux!=DENIED){
+                    printf("\nUnable to connect.\nPlease, try again or leave the program\n");
+                    printf("Retry(r) or Leave(l): ");
+                    fgets(buf, input_string_max_size, stdin);
+                    sscanf(buf,"%c\n",&selector);
+                    if(selector=='r'){
+                        aux=-7;
+                    }else{
+                        break;
+                    }
+                }else if(aux==DENIED){
+                    printf("\nWrong group ID or Secret.\nPlease, try again or leave the program\n");
+                    printf("Retry(r) or Leave(l): ");
+                    fgets(buf, input_string_max_size, stdin);
+                    sscanf(buf,"%c\n",&selector);
+                    if(selector=='r'){
+                        aux=-7;
+                    }else{
+                        break;
+                    }
                 }else{
-                    printf("Sucessfully established conection with group %s\n",group);
+                    printf("\nSucessfully established conection with group %s\n\n",group);
                     while(selector !='5'){
                         printf("Choose what action do you want to take:\n1 - Put value\n2 - Get value\n3 - Delete value\n4 - Register Callback\n5 - Close connection\n");
                         printf("User: ");
@@ -59,10 +75,11 @@ int main(void)
                             printf("Insert the value of the key you inserted: ");
                             fgets(value,100, stdin);
                             value[strlen(value)-1] = '\0';
-                            if(put_value(key,value)==1){
-                                printf("Successfully inserted value\n");
+                            aux=put_value(key,value);
+                            if(aux==1){
+                                printf("\nSuccessfully inserted value\n");
                             }else{
-                                printf("Something went wrong\n");
+                                printf("\nSomething went wrong\n");
                             }
                         }else if(selector=='2'){
                             printf("Insert the key of the entry you want to access: ");

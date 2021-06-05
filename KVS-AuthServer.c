@@ -8,7 +8,9 @@
 
 /*KVS-AuthServer    This program will be reponsible for receiving requests from the local server, such as, to create, delete, get the secret of groups and even authenticate group-secret pairs.
                     
-                    Arguments:  ./KVS */
+                    Arguments:  Port - value of the port the sockets will connect to
+                    
+                    */
 int main(int argc, char**argv)
 {
     int * err;

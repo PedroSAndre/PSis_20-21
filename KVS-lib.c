@@ -6,15 +6,19 @@
 //Defined client_sock here as it is only used in this library
 int client_sock;
 
-/*establish_conection()
-This function 
-
-The arguments are the group_id of the group we want to acess on the local server and the secret related to this group.
-
-Returns 0 in case of sucess or a error flag as defined in Basic.h
-
-This function first establishes a connection with the local server using sockets of type UNIX STREAM and sends a group and secret which will be subject to authentication. 
-If authentication was sucessful, returns 0*/
+/*establish_conection() This function receives as arguments the strings containing the group name and corresponding secret, and tries to open the connection with the 
+                        KVS-LocalServer. If successful, all following operations on key-value pairs are done in then context of the provided group_id.
+                        
+                Arguments:      group_id    - string that contains the group_id of the table we want to acess in KVS-LocalServer
+                                secret      - string that contains the secret corresponding to the group, for authentication
+                        
+                Returns:    0                   - Connection sucessful
+                            ERRSCKCREATION      - Error creating socket
+                            ERRCONNECTING       - Error connecting to local server
+                            DISCONNECTED        - Server disconnected
+                            ERRWRT              - Failed to write in socket
+                            ERRRD               - Group not found
+                            DENIED              - Incorrect group or secret*/
 int establish_connection (char * group_id, char * secret)
 {
     
@@ -43,11 +47,10 @@ int establish_connection (char * group_id, char * secret)
     if(connect(client_sock, (struct sockaddr *)&kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
     {
         perror("Error connecting client socket");
-        return ERRCONNECTING;
+        return DISCONNECTED;
     }
 
     if(read(client_sock,&answer,sizeof(int))==-1){
-        perror("Local disconnected unexpectedly");
         return DISCONNECTED;
     }
     
@@ -73,25 +76,29 @@ int establish_connection (char * group_id, char * secret)
     //Send secret to local server
     if(read(client_sock,&answer,sizeof(answer))==-1)
     {
-        perror("No answer from local server");
-        return ERRRD;
+        return DISCONNECTED;
     }
 
     //Check if request was accepted
     if(answer<0){
-        printf("Request denied\n");
-        return DENIED;
+        return answer;
     }
 
     return 0;
 }
 
 
-/*put_value()
-Como explicado no enunciado, esta função coloca um valor para o valor key.
-Retorna 1 em caso de sucesso ou uma flag de erro definida no Basic.h
-
-Começa por verificar se o servidor está preparado, e de seguida manda uma flag PUT, definida no Basic.h. Daqui pode mandar a chave, o com*/
+/*put_value()   This function tries to assign the provided value to the provided key. If the provided key-pairdoes not exist in the server, it is created.
+                If the key-value pair already exists in the server itis updated with the provided value.
+                        
+                Arguments:      key     - string that contains the key of the pair key-value we want to add
+                                value   - string that contains the value of the pair key-value we want to add
+                        
+                Returns:    1                   - Created the key-value pair sucessfully
+                            DISCONNECTED        - Server disconnected
+                            ERRWRT              - Failed to write in socket
+                            ERRRD               - key not found
+                            ERRMALLOC           - Server was unable to alocate memory for the new key-value pairt*/
 int put_value(char * key, char * value)
 {
     int buf;
@@ -130,10 +137,24 @@ int put_value(char * key, char * value)
         return DISCONNECTED;
     }
 
+    if(buf==SUCCESS){
+        return 1;
+    }
+
     return buf;
 }
 
-
+/*get_value()   This function tries to retrieve the value associated to the provided key. If the provided key-pair exists in the server the corresponding value is 
+                “returned” through the value argument. This function shold do a malloc that will store the calue associated with the key.
+                        
+                Arguments:      key     - string that contains the key of the pair key-value we want to find the value of
+                                value   - address to the string that the value will be placed in
+                        
+                Returns:    1                   - Sucessfully recovered value
+                            DISCONNECTED        - Server disconnected
+                            ERRWRT              - Failed to write in socket
+                            ERRRD               - key not found
+                            ERRMALLOC           - Server was unable to alocate memory for the value*/
 int get_value(char * key, char ** value)
 {
     long int answer;
@@ -163,12 +184,9 @@ int get_value(char * key, char ** value)
         perror("No answer from local server");
         return DISCONNECTED;
     }
-    if(answer==-1){
+    if(answer==ERRRD){
         perror("No key");
-        return DENIED;
-    }else if(answer==0){
-        perror("No value");
-        return -10;
+        return answer;
     }
 
     *value = malloc (answer*sizeof(char));
@@ -186,7 +204,14 @@ int get_value(char * key, char ** value)
     return 1;
 }
 
-
+/*delete_value()    This function tries to retrieve delete the pair key-value associated to the provided key.
+                        
+                Arguments:      key     - string that contains the key of the pair key-value we want to delete
+                        
+                Returns:    1                   - Sucessfully recovered value
+                            DISCONNECTED        - Server disconnected
+                            ERRWRT              - Failed to write in socket
+                            ERRRD               - key not found*/
 int delete_value(char * key)
 {
     int buf;
@@ -213,9 +238,25 @@ int delete_value(char * key)
         return DISCONNECTED;
     }
 
+    if(buf==SUCCESS){
+        return 1;
+    }
+
     return buf;
 }
 
+
+/*register_callback()   This function tries to register a callback the will later be called. The function receives the keythat will be monitored and the pointer to the 
+                        function that will be executed in the applications. When th value associated with the key is changed.
+                        
+                Arguments:      key                 - string that contains the key of the pair key-value we want to monitor
+                                callback_function   - funtion to be called as a thread after a change in key
+                        
+                Returns:    1                   - Sucessfully recovered value
+                            DISCONNECTED        - Server disconnected
+                            ERRWRT              - Failed to write in socket
+                            ERRRD               - key not found
+                            ERRPTHR             - Eror creating the thread*/
 int register_callback(char * key, void (*callback_function)(char *)){
     int answer;
     pthread_t thread_id;
@@ -255,13 +296,21 @@ int register_callback(char * key, void (*callback_function)(char *)){
     return 1;
 }
 
+/*close_connection()   This function closes the connection previously opened.
+                        
+                Arguments:      
+                        
+                Returns:    1                   - Sucessfully recovered value
+                            DISCONNECTED        - Server disconnected
+                            ERRWRT              - Failed to write in socket
+                            ERRCLS              - Error closing connection*/
 int close_connection()
 {
     int buf;
 
     if(read(client_sock,&buf,sizeof(int))==-1){
         perror("Local disconnected unexpectedly");
-        return DISCONNECTED;
+        return 1;
     }
 
     buf=CLS;

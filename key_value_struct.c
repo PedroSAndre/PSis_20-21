@@ -262,3 +262,29 @@ int hashWaitChange_key_value(struct key_value * table, char * key)
     }
     return SUCCESS;
 }
+
+void signal_all_callback(struct key_value * table){
+    struct key_value * aux;
+    if(table==NULL){
+        return;
+    }
+    for(int i=0;i<key_value_table_size;i++){
+        if(strcmp(table[i].key, "\0") != 0){
+            pthread_mutex_lock(&(table[i].mutex));
+            if(table[i].signal==1){
+                pthread_cond_signal(&(table[i].cond));
+            }
+            aux = &(table[i]);
+            while(aux->next != NULL)
+            {
+                aux = aux->next;
+                if(aux->signal==1){
+                    pthread_cond_signal(&(table[i].cond));
+                }
+            }
+            pthread_mutex_unlock(&(table[i].mutex));
+        }
+
+    }
+    
+}

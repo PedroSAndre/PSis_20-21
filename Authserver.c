@@ -5,7 +5,11 @@
 
 
 
-
+/*HashIndex()   This function assigns an index to a certain group.
+                        
+                Arguments:  group   
+                        
+                Returns:    Index for the hash table*/
 int HashIndex(char * group){
     int i=0;
     int Index=0;
@@ -271,4 +275,5 @@ void delete_All_Entries(){
         }
     }
 }
+
 

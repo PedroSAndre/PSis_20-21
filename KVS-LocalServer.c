@@ -122,6 +122,8 @@ int main(int argc, char ** argv)
             {
                 printf("Waiting for clients to be disconnected...\n");
                 strcpy(deleting_group, input_string);
+                
+                signal_all_callback(hashGet_group_table(groups,input_string));
                 wait_to_group_clients_to_disconect(state,all_clients_connected,input_string);
                 printf("All clients disconected\n");
                 pthread_mutex_lock(&acess_group);

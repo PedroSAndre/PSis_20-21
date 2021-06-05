@@ -190,3 +190,4 @@ void hashFree_group_table(struct group_table * table)
     free(table);
     return;
 }
+

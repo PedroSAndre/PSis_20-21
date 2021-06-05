@@ -40,7 +40,8 @@ int main(void)
 
                 
                 aux=establish_connection(group,secret);
-                if(aux!=0 && aux!=DENIED){
+                if(aux!=0 && aux!=DENIED)
+                {
                     printf("\nUnable to connect.\nPlease, try again or leave the program\n");
                     printf("Retry(r) or Leave(l): ");
                     fgets(buf, input_string_max_size, stdin);
@@ -50,17 +51,24 @@ int main(void)
                     }else{
                         break;
                     }
-                }else if(aux==DENIED){
+                }
+                else if(aux==DENIED)
+                {
                     printf("\nWrong group ID or Secret.\nPlease, try again or leave the program\n");
                     printf("Retry(r) or Leave(l): ");
                     fgets(buf, input_string_max_size, stdin);
                     sscanf(buf,"%c\n",&selector);
-                    if(selector=='r'){
+                    if(selector=='r')
+                    {
                         aux=-7;
-                    }else{
+                    }
+                    else
+                    {
                         break;
                     }
-                }else{
+                }
+                else
+                {
                     printf("\nSucessfully established conection with group %s\n\n",group);
                     while(selector !='5'){
                         printf("Choose what action do you want to take:\n1 - Put value\n2 - Get value\n3 - Delete value\n4 - Register Callback\n5 - Close connection\n");

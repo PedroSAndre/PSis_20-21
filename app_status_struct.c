@@ -84,5 +84,4 @@ void send_kick_out_order(struct app_status * dummy, int clients_connected,char *
         }
     }
     return;
-
 }

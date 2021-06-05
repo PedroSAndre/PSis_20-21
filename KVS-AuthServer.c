@@ -4,6 +4,11 @@
 
 #define SKIPWRTANSWER 2
 
+
+
+/*KVS-AuthServer    This program will be reponsible for receiving requests from the local server, such as, to create, delete, get the secret of groups and even authenticate group-secret pairs.
+                    
+                    Arguments:  ./KVS */
 int main(int argc, char**argv)
 {
     int * err;

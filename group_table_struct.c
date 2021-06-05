@@ -47,7 +47,7 @@ int hashInsert_group_table(struct group_table * table, char * group)
         //Fazer free da tabela que estava aqui
         table[aux].key_value_table = hashCreateInicialize_key_value();
         if(table[aux].key_value_table == NULL)
-            return -1;
+            return ERRMALLOC;
     }
     else
     {
@@ -60,7 +60,7 @@ int hashInsert_group_table(struct group_table * table, char * group)
         {
             aux2->key_value_table = hashCreateInicialize_key_value();
             if(aux2->key_value_table == NULL)
-                return -1;
+                return ERRMALLOC;
         }
         else
         {
@@ -68,16 +68,16 @@ int hashInsert_group_table(struct group_table * table, char * group)
             aux2 = aux2->next;
             if(aux2 == NULL)
             {
-                return -1;
+                return ERRMALLOC;
             }
             aux2->next=NULL;
             strcpy(aux2->group, group);
             aux2->key_value_table = hashCreateInicialize_key_value();
             if(aux2->key_value_table == NULL)
-                return -1;
+                return ERRMALLOC;
         }   
     }
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -113,35 +113,29 @@ int hashDelete_group_table(struct group_table * table, char * group)
     int aux;
     struct group_table * aux2;
     struct group_table * aux3;
-    struct group_table * aux4;
     aux = hashCode_group_table(group);
     if(strcmp(table[aux].group, group) == 0) //Same key
     {
         if(table[aux].next == NULL)
         {
             strcpy(table[aux].group, "\0");
-            //fazer free da tabela aqui e everywhere
+            hashFree_key_value(table[aux].key_value_table);
             table[aux].key_value_table = NULL;
         }
         else
-        {//puts the last element first
+        {
             aux2 = table[aux].next;
-            aux3 = &(table[aux]);
-            while(aux2->next != NULL)
-            {
-                aux3 = aux2;
-                aux2 = aux2->next;
-            }
+            hashFree_key_value(table[aux].key_value_table);
             strcpy(table[aux].group, aux2->group);
             table[aux].key_value_table = aux2->key_value_table;
+            table[aux].next = aux2->next;
             free(aux2);
-            aux3->next = NULL;
         }
     }
     else
     {//needs to find it in the linked list
         if(strcmp(table[aux].group,"\0") == 0)
-            return -1;
+            return ERRRD;
         aux2 = &(table[aux]);
         while(aux2->next != NULL && strcmp(aux2->group, group) != 0)
         {
@@ -152,31 +146,23 @@ int hashDelete_group_table(struct group_table * table, char * group)
         {
             if(aux2->next == NULL)
             {
+                hashFree_key_value(aux2->key_value_table);
                 free(aux2);
                 aux3->next = NULL;
             }
             else
             {
-                aux4 = aux2;
-                aux2 = aux2->next;
-                aux3 = aux4;
-                while(aux2->next != NULL)
-                {
-                    aux3 = aux2;
-                    aux2 = aux2->next;
-                }
-                strcpy(aux4->group, aux2->group);
-                aux4->key_value_table = aux2->key_value_table;
+                aux3->next = aux2->next;
+                hashFree_key_value(aux2->key_value_table);
                 free(aux2);
-                aux3->next = NULL;
             }
         }
         else
         {
-            return -1;
+            return ERRRD;
         }   
     }
-    return 0;
+    return SUCCESS;
 }
 
 void hashFree_group_table(struct group_table * table)

@@ -30,50 +30,50 @@ int main(int argc, char ** argv)
     socklen_t len = sizeof (struct sockaddr_in);
     char * port_str;
     char * authaddr_str;
-    char * secret = malloc(secret_max_size*sizeof(char));
     int *j;
-    struct key_value * local_key_value_table;
 
 
     int selector;
     int aux = 0;
-    char input_string[input_string_max_size];
+    char input_string[input_string_max_size] = "\0";
+    char secret[secret_max_size] = "\0";
     pthread_t acepting_connections_thread_ptid;
 
     if(argc !=3){
         perror("Incorrect number of arguments");
-        return 0;
+        return WRNGARG;
     }
 
-    strcpy(deleting_group,'\0');
+    strcpy(deleting_group,"\0");
 
-    CreateAuthServerSock(argv[2],argv[1],&Authserver_sock,&Authserver_sock_addr);
-
-    printf("Sucessfully connected\n");
-    printf("IP address is: %s\n", inet_ntoa(Authserver_sock_addr.sin_addr));
-    printf("Port is: %d\n", (int) ntohs(Authserver_sock_addr.sin_port));
+    if(CreateAuthServerSock(argv[2],argv[1],&Authserver_sock,&Authserver_sock_addr)==ERRSCKBIND)
+    {
+        printf("Error binding auth-local server socket\n");
+    }
 
     state = inicialize_app_status();
     if(state == NULL)
     {
-        printf("Error inicializing app_status");
-        return -1;
+        printf("Error inicializing app_status\n");
+        return ERRMALLOC;
     }
 
     groups = hashCreateInicialize_group_table();
     if(groups == NULL)
     {
-        printf("Error inicializing group_table");
-        return -1;
+        printf("Error inicializing group_table\n");
+        return ERRMALLOC;
     }
 
     if(pthread_create(&acepting_connections_thread_ptid,NULL,(void *)&acceptConnections,NULL)<0)
     {
-        perror("Error creating thread");
-        return -1;
+        perror("Error creating thread\n");
+        return ERRPTHR;
     }
 
     printf("*****Welcome to KVS Local Server*****\n");
+    printf("Auth-Server IP address is: %s\n", inet_ntoa(Authserver_sock_addr.sin_addr));
+    printf("Auth-Server Port is: %d\n\n", (int) ntohs(Authserver_sock_addr.sin_port));
 
     //Main control cycle
     while(server_status)
@@ -94,19 +94,20 @@ int main(int argc, char ** argv)
         {
             printf("Insert the new group ID: ");
             fgets(input_string, group_id_max_size, stdin);
-            input_string[strlen(input_string)-1]='\0';
+            input_string[strlen(input_string)-1]='\0'; //deleting \n
 
-            if(AuthServerCom(PUT,input_string,secret,Authserver_sock,Authserver_sock_addr)==0){
+            if(AuthServerCom(PUT,input_string,secret,Authserver_sock,Authserver_sock_addr)==ERRRD)
+            {
                 printf("No response from Auth server\n");
-            }else{
-                printf("Group %s Created\n",input_string);
-
+            }
+            else
+            {
                 printf("Secret of group %s\n%s\n",input_string,secret);
                 pthread_mutex_lock(&acess_group);
-                if(hashInsert_group_table(groups, input_string) == 0)
-                    printf("Group created with sucess\n\n");
+                if(hashInsert_group_table(groups, input_string) == SUCCESS)
+                    printf("Group %s created with sucess\n\n", input_string);
                 else
-                    printf("Error creating selected group\n\n");
+                    printf("Error alocating memory for the creation of selected group\n\n");
                 pthread_mutex_unlock(&acess_group);
             }
         }
@@ -116,38 +117,37 @@ int main(int argc, char ** argv)
             fgets(input_string, group_id_max_size, stdin);
             input_string[strlen(input_string)-1]='\0';
             aux=AuthServerCom(DEL,input_string,secret,Authserver_sock,Authserver_sock_addr);
-            if(aux==0 ){
+            if(aux<SUCCESS)
+            {
                 printf("No response from Auth server\n");
-            }else if(aux==1){
-                    //CONFLICT HERE
-                    pthread_mutex_lock(&acess_group);
-                    local_key_value_table = hashGet_group_table(groups, input_string);
-                    if(local_key_value_table == NULL)
-                    {
-                        pthread_mutex_unlock(&acess_group);
-                        pthread_exit(NULL);
-                    }
-                    kick_out_clients(state,all_clients_connected,input_string);
-                    if(hashDelete_group_table(groups, input_string) != 0){
-                        pthread_mutex_unlock(&acess_group);
-                        printf("Error deleting selected group\n\n");
-                    }else{
-                        pthread_mutex_unlock(&acess_group);
-                        printf("Waiting for clients to be disconnected...\n");
-                        while(aux){
-                            aux=0;
-                            for(int i=0;i<all_clients_connected;i++){
-                                if(strcmp(state[i].group,input_string)==0){
-                                    if(state[j[i]].close_time==-1){
-                                        aux=1;
-                                    }
+            }
+            else if(aux==SUCCESS)
+            {
+                pthread_mutex_lock(&acess_group);
+                send_kick_out_order(state,all_clients_connected,input_string);
+                if(hashDelete_group_table(groups, input_string) == ERRRD){
+                    pthread_mutex_unlock(&acess_group);
+                    printf("Error deleting selected group\nIt was not found\n");
+                }
+                else
+                {
+                    pthread_mutex_unlock(&acess_group);
+                    printf("Waiting for clients to be disconnected...\n");
+                    while(aux){
+                        aux=0;
+                        for(int i=0;i<all_clients_connected;i++){
+                            if(strcmp(state[i].group,input_string)==0){
+                                if(state[j[i]].close_time==-1){
+                                    aux=1;
                                 }
                             }
                         }
-                        printf("Group deleted sucessfully\n\n");
                     }
-                
-            }else{
+                    printf("Group %s deleted sucessfully\n\n", input_string);
+                }
+            }
+            else
+            {
                 printf("Something went wrong in the Auth Server\n");
             }
         }
@@ -155,14 +155,19 @@ int main(int argc, char ** argv)
         {
             printf("Get info of group ID: ");
             fgets(input_string, group_id_max_size, stdin);
+            input_string[strlen(input_string)-1]='\0';
             aux=AuthServerCom(GET,input_string,secret,Authserver_sock,Authserver_sock_addr);
-            if(aux==0){
-                printf("No response from Auth server\n");
-            }else if(aux==1){
-                
-                
-            }else{
-                printf("Something went wrong in the Auth Server\n");
+            if(aux==ERRRD)
+            {
+                printf("No group %s on Auth-server\n");
+            }
+            else if(aux==SUCCESS)
+            {
+                printf("Group %s has secret\n%s\n\n", input_string, secret);
+            }
+            else
+            {
+                printf("Something went wrong with the Auth Server\n");
             }
         }
         else if(selector == 4)
@@ -181,10 +186,11 @@ int main(int argc, char ** argv)
     pthread_join(acepting_connections_thread_ptid,NULL);
 
     hashFree_group_table(groups);
+    free(state);
 
     printf("Server terminated sucessfully\n");
 
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -338,6 +344,9 @@ void handleConnection(void *arg)
             }else if(answer==CALL){
                 read(client_sock,key,key_max_size*sizeof(char));
                 answer=hashWaitChange_key_value(local_key_value_table,key);
+                if(ison!=1){
+                    answer=DISCONNECTED;
+                }
                 write(client_sock,&answer,sizeof(answer));
             }else{
                 answer=WRGREQ;

@@ -178,6 +178,8 @@ int main(int argc, char ** argv)
     hashFree_group_table(groups);
     free(state);
 
+
+
     printf("Server terminated sucessfully\n");
 
     return SUCCESS;
@@ -222,6 +224,11 @@ void acceptConnections(void *arg)
     for(int i=1;i<=all_clients_connected;i++)
     {
         pthread_join(state[i].process_ptid,NULL);
+    }
+
+    if(close(kvs_localserver_sock)<0)
+    {
+        perror("Error closing accepting connections socket\n");
     }
     pthread_exit(NULL);
 }
@@ -277,7 +284,10 @@ void handleConnection(void *arg)
         {
             answer = WAIT;
             key[0] = '\0';
-            read(client_sock,&answer,sizeof(answer)); //adicionar timeout aqui
+            if(read_timeout(&client_sock,&answer,sizeof(answer))==ERRTIMEOUT)
+            {
+                continue;
+            }
             if(answer == WAIT)
                 continue;
             else if(answer == PUT)

@@ -43,11 +43,15 @@ char * getGroupSecret(char * group);
 int compareHashGroup(char * group, char * checksecret);
 
 //Finds a message related to the Local server requesting, by comparing IP and port
-struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main);
+struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main, int * err);
 
 //If the message has already been analysed, it can be deleted
 struct Message * deleteMessage(struct Message * Current, struct Message * Main);
 
 void generate_secret(char * secret);
+
+void delete_All_messages(struct Message * Main);
+
+void delete_All_Entries();
 
 #endif

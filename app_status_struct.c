@@ -18,8 +18,11 @@ struct app_status * inicialize_app_status(void)
 }
 
 //Returns 0 in sucess, -1 in failure
-int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group,int*ison)
+int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group,int*ison, char * deleting_group)
 {
+    if(strcmp(deleting_group,group)==0) {
+        return -1;
+    } 
     dummy = realloc(dummy,sizeof(struct app_status));
     if(dummy == NULL)
         return -1;
@@ -67,26 +70,17 @@ void print_status(struct app_status * dummy, int clients_connected)
     printf("\n");
 }
 
-void kick_out_clients(struct app_status * dummy, int clients_connected,char * group)
+void send_kick_out_order(struct app_status * dummy, int clients_connected,char * group)
 {
     int j[clients_connected];
     int a=0;
     int aux=1;
-    for(int i = 1;i<=clients_connected;i++)
+    for(int i = 0;i<clients_connected;i++)
     {
         if(strcmp(dummy[i].group,group)==0){
             *(dummy[i].ison)=0;
             j[a]=i;
             a++;
-        }
-    }
-    printf("Waiting for clients to be disconnected...\n");
-    while(aux){
-        aux=0;
-        for(int i=0;i<a;i++){
-            if(dummy[j[i]].close_time==-1){
-                aux=1;
-            }
         }
     }
     return;

@@ -28,7 +28,7 @@ int CreateUpdateEntry(char * group,char *secret){
         Novo=malloc(sizeof(struct HashGroup));
         if (Novo ==NULL){
             perror("Error alocating memory");
-            return -1;
+            return ERRMALLOC;
         }
         strcpy(Novo->group,group);
         strcpy(Novo->secret,secret);
@@ -47,7 +47,7 @@ int CreateUpdateEntry(char * group,char *secret){
             Novo=malloc(sizeof(struct HashGroup));
             if (Novo ==NULL){
                 perror("Error alocating memory");
-                return -1;
+                return ERRMALLOC;
             }
             strcpy(Novo->group,group);
             strcpy(Novo->secret,secret);
@@ -128,12 +128,12 @@ int compareHashGroup(char * group, char * checksecret){
             return 0;
         }
     }else{
-        return -1;
+        return DENIED;
     }
     
 }
 
-struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main){
+struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main, int * err){
     int request=0,aux;
     char * group;
     char * secret;
@@ -148,6 +148,10 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
     if(Current==NULL)
     {
         group=malloc(sizeof(char)*group_id_max_size);
+        if(group==NULL){
+            *err=ERRMALLOC;
+            return NULL;
+        }
         aux=sscanf(buf,"%d:%s",&request,group);
         if(aux!=2){
             free(group);
@@ -155,6 +159,11 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
             return NULL;
         }
         Current=malloc(sizeof(struct Message));
+        if(Current=NULL){
+            free(group);
+            *err=ERRMALLOC;
+            return NULL;
+        }
         Current->clientaddr=kvs_localserver_sock_addr;
         Current->request=request;
         Current->next=NULL;
@@ -164,6 +173,9 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
             secret=malloc(sizeof(char)*secret_max_size);
             if(secret==NULL){
                 perror("Error alocating memory");
+                free(group);
+                free(Current);
+                *err=ERRMALLOC;
                 return NULL;
             }
             strcpy(Current->secret,"\0");
@@ -179,6 +191,10 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 
         if(Current->clientaddr.sin_addr.s_addr!=kvs_localserver_sock_addr.sin_addr.s_addr || ntohs(kvs_localserver_sock_addr.sin_port)!=ntohs(Current->clientaddr.sin_port)){
             group= malloc(sizeof(char)*group_id_max_size);
+            if(group==NULL){
+                *err=ERRMALLOC;
+                return NULL;
+            }
             aux=sscanf(buf,"%d:%s",&request,group);
             if(aux!=2){
                 free(group);
@@ -189,6 +205,7 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
             if(Current==NULL){
                 free(group);
                 perror("Error alocating memory");
+                *err=ERRMALLOC;
                 return NULL;
             }
             Current->clientaddr=kvs_localserver_sock_addr;
@@ -211,14 +228,15 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     struct Message * Previous;
     if(Current==Main){
+        Main=Current->next;
         free(Current);
         return NULL;
     }
     Previous=Main;
     if(Previous==NULL){
-
+        return NULL;
     }
-    while(Previous->next!=Current){
+    while(Previous->next!=Current || Previous->next ==NULL){
         Previous=Previous->next;
     }
     Previous->next=Current->next;
@@ -236,5 +254,22 @@ void generate_secret(char * secret){
 
     return;
 
+}
+
+void delete_All_Messages(struct Message * Main){
+    struct Message * Current;
+    while(Main!=NULL){
+        Main=deleteMessage(Main,Main);
+    }
+}
+
+void delete_All_Entries(){
+    struct HashGroup * Current;
+    for(int i=0;i<SIZE;i++){
+        while(Table[i]!=NULL){
+            Current=Table[i];
+            DeleteEntry(Current->group);
+        }
+    }
 }
 

@@ -23,37 +23,51 @@ int main(void)
 
 
     while(aux!=0){
-        printf("Do you want to connect to a group?(y/n)\n");
-        printf("n will close the program\n");
-        printf("User: ");
+        printf("Do you want to connect to a group?(n will close the program)(y/n):");
         fgets(buf, input_string_max_size, stdin);
         sscanf(buf,"%c\n",&selector);
         if(selector=='y'){
             aux=-7;
             while(aux==-7){
 
-                printf("Insert the group you want to access: ");
+                printf("\nInsert the group you want to access: ");
                 fgets(group, group_id_max_size, stdin);
                 group[strlen(group)-1]='\0';
 
-                printf("Insert the secret of the group you inserted: ");
+                printf("Insert the secret of the group: ");
                 fgets(secret, secret_max_size, stdin);
                 secret[strlen(secret)-1]='\0';
 
                 
                 aux=establish_connection(group,secret);
-                if(aux!=0 && aux!=-7){
-                    return -1;
-                }else if(aux==-7){
-                    printf("Wrong group ID or Secret.\nPlease, try again\n");
+                if(aux!=0 && aux!=DENIED){
+                    printf("\nUnable to connect.\nPlease, try again or leave the program\n");
+                    printf("Retry(r) or Leave(l): ");
+                    fgets(buf, input_string_max_size, stdin);
+                    sscanf(buf,"%c\n",&selector);
+                    if(selector=='r'){
+                        aux=-7;
+                    }else{
+                        break;
+                    }
+                }else if(aux==DENIED){
+                    printf("\nWrong group ID or Secret.\nPlease, try again or leave the program\n");
+                    printf("Retry(r) or Leave(l): ");
+                    fgets(buf, input_string_max_size, stdin);
+                    sscanf(buf,"%c\n",&selector);
+                    if(selector=='r'){
+                        aux=-7;
+                    }else{
+                        break;
+                    }
                 }else{
-                    printf("Sucessfully established conection with group %s\n",group);
+                    printf("\nSucessfully established conection with group %s\n\n",group);
                     while(selector !='5'){
                         printf("Choose what action do you want to take:\n1 - Put value\n2 - Get value\n3 - Delete value\n4 - Register Callback\n5 - Close connection\n");
                         printf("User: ");
                         fgets(buf, input_string_max_size, stdin);
                         sscanf(buf,"%c\n",&selector);
-                        if(selector=='1'){
+                        if(selector=='1'){//Put value
                             printf("Insert the key you want to access: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
@@ -61,12 +75,13 @@ int main(void)
                             printf("Insert the value of the key you inserted: ");
                             fgets(value,100, stdin);
                             value[strlen(value)-1] = '\0';
-                            if(put_value(key,value)==1){
-                                printf("Successfully inserted value\n");
+                            aux=put_value(key,value);
+                            if(aux==1){
+                                printf("\nSuccessfully inserted value\n");
                             }else{
-                                printf("Something went wrong\n");
+                                printf("\nSomething went wrong\n");
                             }
-                        }else if(selector=='2'){
+                        }else if(selector=='2'){//Get value
                             printf("Insert the key of the entry you want to access: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
@@ -76,7 +91,7 @@ int main(void)
                             }else{
                                 printf("Something went wrong\n");
                             }
-                        }else if(selector=='3'){
+                        }else if(selector=='3'){//Delete value
                             printf("Insert the key of the entry you want to delete: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
@@ -85,7 +100,7 @@ int main(void)
                             }else{
                                 printf("Something went wrong\n");
                             }
-                        }else if(selector=='4'){
+                        }else if(selector=='4'){//Register callback
                             printf("Insert the key of the entry you want to monitor: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
@@ -94,7 +109,7 @@ int main(void)
                             {
                                 printf("Something went wrong\n");
                             }
-                        }else if(selector == '5'){
+                        }else if(selector == '5'){//Close connection
                             printf("Are you sure you want to leave the connection to group %s?\n",group);
                             printf("User: (y/n)");
                             fgets(buf, input_string_max_size, stdin);

@@ -122,6 +122,20 @@ int main(int argc, char ** argv)
             {
                 pthread_mutex_lock(&acess_group);
                 send_kick_out_order(state,all_clients_connected,input_string);
+                while(aux)
+                {
+                    aux=0;
+                    for(int i=0;i<all_clients_connected;i++)
+                    {
+                        if(strcmp(state[i].group,input_string)==0)
+                        {
+                            if(state[i].close_time==-1)
+                            {
+                                aux=1;
+                            }
+                        }
+                    }
+                }
                 if(hashDelete_group_table(groups, input_string) == ERRRD){
                     pthread_mutex_unlock(&acess_group);
                     printf("Error deleting selected group\nIt was not found\n");
@@ -130,16 +144,6 @@ int main(int argc, char ** argv)
                 {
                     pthread_mutex_unlock(&acess_group);
                     printf("Waiting for clients to be disconnected...\n");
-                    while(aux){
-                        aux=0;
-                        for(int i=0;i<all_clients_connected;i++){
-                            if(strcmp(state[i].group,input_string)==0){
-                                if(state[i].close_time==-1){
-                                    aux=1;
-                                }
-                            }
-                        }
-                    }
                     printf("Group %s deleted sucessfully\n\n", input_string);
                 }
             }
@@ -255,7 +259,6 @@ void handleConnection(void *arg)
     local_PID = pthread_self();
 
 
-    write(client_sock,&answer,sizeof(answer));
     read(client_sock,&client_PID,sizeof(client_PID));
     read(client_sock,group_id,(group_id_max_size*sizeof(char)));
     read(client_sock,secret,(secret_max_size*sizeof(char)));
@@ -282,11 +285,10 @@ void handleConnection(void *arg)
         write(client_sock,&answer,sizeof(answer));
         
         //Connection cycle
-        while(server_status == 1 && cycle && ison)
+        while(server_status && cycle && ison)
         {
             answer = WAIT;
             key[0] = '\0';
-            write(client_sock,&answer,sizeof(int));
             read(client_sock,&answer,sizeof(answer)); //adicionar timeout aqui
             if(answer == WAIT)
                 continue;

@@ -49,10 +49,6 @@ int establish_connection (char * group_id, char * secret)
         perror("Error connecting client socket");
         return DISCONNECTED;
     }
-
-    if(read(client_sock,&answer,sizeof(int))==-1){
-        return DISCONNECTED;
-    }
     
 
 
@@ -103,11 +99,6 @@ int put_value(char * key, char * value)
 {
     int buf;
     long int vallen=strlen(value);
-
-    if(read(client_sock,&buf,sizeof(int))==-1){
-        perror("Local disconnected unexpectedly");
-        return DISCONNECTED;
-    }
 
     buf=PUT;
 
@@ -160,11 +151,6 @@ int get_value(char * key, char ** value)
     long int answer;
     int buf;
 
-    if(read(client_sock,&buf,sizeof(int))==-1){
-        perror("Local disconnected unexpectedly");
-        return DISCONNECTED;
-    }
-
     buf=GET;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
@@ -216,11 +202,6 @@ int delete_value(char * key)
 {
     int buf;
 
-    if(read(client_sock,&buf,sizeof(int))==-1){
-        perror("Local disconnected");
-        return DISCONNECTED;
-    }
-
     buf=DEL;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
@@ -261,11 +242,6 @@ int register_callback(char * key, void (*callback_function)(char *)){
     int answer;
     pthread_t thread_id;
 
-    if(read(client_sock,&answer,sizeof(int))==-1){
-        perror("Local disconnected unexpectedly");
-        return DISCONNECTED;
-    }
-
     answer=CALL;
     
     if(write(client_sock,&answer,sizeof(int))==-1){
@@ -305,11 +281,6 @@ int register_callback(char * key, void (*callback_function)(char *)){
 int close_connection()
 {
     int buf;
-
-    if(read(client_sock,&buf,sizeof(int))==-1){
-        perror("Local disconnected unexpectedly");
-        return 1;
-    }
 
     buf=CLS;
 

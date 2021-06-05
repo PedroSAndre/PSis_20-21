@@ -26,13 +26,7 @@ char deleting_group[group_id_max_size];
 
 int main(int argc, char ** argv)
 {
-    unsigned short port;
-    socklen_t len = sizeof (struct sockaddr_in);
-    char * port_str;
-    char * authaddr_str;
     int *j;
-
-
     int selector;
     int aux = 0;
     char input_string[input_string_max_size] = "\0";

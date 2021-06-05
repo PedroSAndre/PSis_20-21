@@ -34,14 +34,14 @@ int CreateUpdateEntry(char * group,char *secret){
         strcpy(Novo->secret,secret);
         Novo->next=NULL;
         Table[TableIndex]=Novo;
-        return 1;
+        return SUCCESS;
     }
 
     while(Current!=NULL){
 
         if(strcmp(Current->group,group)==0){
             strcpy(secret,Current->secret);
-            return 1;
+            return SUCCESS;
         }
         if(Current->next==NULL){
             Novo=malloc(sizeof(struct HashGroup));
@@ -53,7 +53,7 @@ int CreateUpdateEntry(char * group,char *secret){
             strcpy(Novo->secret,secret);
             Novo->next=NULL;
             Current->next=Novo;
-            return 1;
+            return SUCCESS;
         }
         Current=Current->next;
 

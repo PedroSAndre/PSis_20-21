@@ -24,6 +24,8 @@ pthread_mutex_t acess_group;
 char deleting_group[group_id_max_size];
 
 
+
+
 int main(int argc, char ** argv)
 {
     int *j;
@@ -37,6 +39,7 @@ int main(int argc, char ** argv)
         perror("Incorrect number of arguments");
         return WRNGARG;
     }
+
 
     strcpy(deleting_group,"\0");
 

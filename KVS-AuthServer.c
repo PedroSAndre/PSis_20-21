@@ -93,10 +93,10 @@ int main(int argc, char**argv)
             }else if (Current->request==PUT){
                 generate_secret(newsecret);
                 strcpy(Current->secret,newsecret);
-                if(CreateUpdateEntry(Current->group,Current->secret)==1){
+                if(CreateUpdateEntry(Current->group,Current->secret)==SUCCESS){
 
-                    sendto(kvs_authserver_sock,newsecret,secret_max_size*sizeof(char),0,(struct sockaddr * )&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
-                    printf("Secret:%s\n",newsecret);
+                    sendto(kvs_authserver_sock,Current->secret,secret_max_size*sizeof(char),0,(struct sockaddr * )&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
+                    printf("Secret:%s\n",Current->secret);
 
                     free(Current);
                     answer=SKIPWRTANSWER;

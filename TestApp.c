@@ -67,7 +67,7 @@ int main(void)
                         break;
                     }
                 }
-                else
+                else 
                 {
                     printf("\nSucessfully established conection with group %s\n\n",group);
                     while(selector !='5'){

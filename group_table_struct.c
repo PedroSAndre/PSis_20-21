@@ -43,11 +43,12 @@ int hashInsert_group_table(struct group_table * table, char * group)
     aux = hashCode_group_table(group);
     if(strcmp(table[aux].group, "\0") == 0 || strcmp(table[aux].group, group) == 0) //Same key or no element
     {
-        strcpy(table[aux].group, group);
-        //Fazer free da tabela que estava aqui
+        if(strcmp(table[aux].group, group) == 0)
+            hashFree_key_value(table[aux].key_value_table);
         table[aux].key_value_table = hashCreateInicialize_key_value();
         if(table[aux].key_value_table == NULL)
             return ERRMALLOC;
+        strcpy(table[aux].group, group);
     }
     else
     {
@@ -58,6 +59,7 @@ int hashInsert_group_table(struct group_table * table, char * group)
         }
         if(strcmp(aux2->group, group) == 0) //overwriting
         {
+            hashFree_key_value(aux2->key_value_table);
             aux2->key_value_table = hashCreateInicialize_key_value();
             if(aux2->key_value_table == NULL)
                 return ERRMALLOC;
@@ -67,14 +69,12 @@ int hashInsert_group_table(struct group_table * table, char * group)
             aux2->next = malloc(sizeof(struct group_table));
             aux2 = aux2->next;
             if(aux2 == NULL)
-            {
                 return ERRMALLOC;
-            }
             aux2->next=NULL;
-            strcpy(aux2->group, group);
             aux2->key_value_table = hashCreateInicialize_key_value();
             if(aux2->key_value_table == NULL)
                 return ERRMALLOC;
+            strcpy(aux2->group, group);
         }   
     }
     return SUCCESS;
@@ -114,7 +114,7 @@ int hashDelete_group_table(struct group_table * table, char * group)
     struct group_table * aux2;
     struct group_table * aux3;
     aux = hashCode_group_table(group);
-    if(strcmp(table[aux].group, group) == 0) //Same key
+    if(strcmp(table[aux].group, group) == 0) //Same group
     {
         if(table[aux].next == NULL)
         {

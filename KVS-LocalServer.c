@@ -195,9 +195,6 @@ int main(int argc, char ** argv)
 
 
 
-
-
-
 //Thread functions
 void acceptConnections(void *arg)
 {
@@ -209,12 +206,13 @@ void acceptConnections(void *arg)
     kvs_localserver_sock = createAndBind_UNIX_stream_Socket(server_addr);
     if(kvs_localserver_sock<0)
     {
+        printf("Fatal error - could not create socket to accept connections\n");
         pthread_exit(NULL);
     }
 
     if(listen(kvs_localserver_sock,max_waiting_connections)<0)
     {
-        perror("Error listening for connections\n");
+        perror("Fatal error - could not listen for connections\n");
         pthread_exit(NULL);
     }
 
@@ -222,16 +220,20 @@ void acceptConnections(void *arg)
     while(server_status)
     {
         client_sock = accept_connection_timeout(&(kvs_localserver_sock));
-        if(client_sock != -1)
+        if(client_sock != -ERRTIMEOUT)
         {
-            if(pthread_create(&temp_PID,NULL,(void *)&handleConnection,(void *)&client_sock)<0)
+            if(pthread_create(&temp_PID,NULL,(void *)&handleConnection,(void *)&client_sock)<SUCCESS)
             {
-                perror("Error creating new connection thread");
+                perror("Error creating new connection thread\n\n");
             }
         }
     }
 
-    //pthread_join(ptid,NULL);
+    //waits for all connection threads to close
+    for(int i=1;i<=all_clients_connected;i++)
+    {
+        pthread_join(state[i].process_ptid,NULL);
+    }
     pthread_exit(NULL);
 }
 

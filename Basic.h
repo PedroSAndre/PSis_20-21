@@ -52,5 +52,6 @@
 #define ERRSCKBIND -10
 #define WRNGARG -11
 #define WRGREQ -12
+#define ERRTIMEOUT -13
 
 #endif

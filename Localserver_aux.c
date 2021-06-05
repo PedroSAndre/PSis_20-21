@@ -50,7 +50,7 @@ int accept_connection_timeout(int * socket_af_stream)
     
     if(client_sock<0)
     {
-        return -1;
+        return ERRTIMEOUT;
     }
     return client_sock;
 }

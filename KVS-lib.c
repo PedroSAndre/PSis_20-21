@@ -1,7 +1,6 @@
 #include "Basic.h"
 #include "KVS-lib.h"
 
-#include <pthread.h>
 
 //Defined client_sock here as it is only used in this library
 int client_sock;
@@ -49,6 +48,7 @@ int establish_connection (char * group_id, char * secret)
         perror("Error connecting client socket");
         return DISCONNECTED;
     }
+    signal(SIGPIPE, SIG_IGN);//Accept write errors
     
 
 

@@ -7,7 +7,7 @@ struct app_status * inicialize_app_status(void)
 {
     //Creates an instance with the information from main
     struct app_status * dummy;
-    dummy = malloc(sizeof(struct app_status));
+    dummy = malloc(10000*sizeof(struct app_status));
     if(dummy == NULL)
         return NULL;
     dummy[0].process_ptid = -1;
@@ -25,9 +25,9 @@ int add_status(struct app_status * dummy, pthread_t process_ptid, int client_pti
     if(strcmp(deleting_group,group)==0) {
         return DENIED;
     } 
-    dummy = realloc(dummy,sizeof(struct app_status));
+    /*dummy = realloc(dummy,sizeof(struct app_status));
     if(dummy == NULL)
-        return ERRMALLOC;
+        return ERRMALLOC;*/
     *clients_connected = *clients_connected+1;
     dummy[*clients_connected].client_ptid = client_ptid;
     dummy[*clients_connected].process_ptid = process_ptid;

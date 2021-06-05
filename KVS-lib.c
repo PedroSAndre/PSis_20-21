@@ -282,14 +282,12 @@ int register_callback(char * key, void (*callback_function)(char *)){
         return DISCONNECTED;
     }
     
-    if(answer==1){
+    if(answer==SUCCESS){
         if(pthread_create(&thread_id,NULL,(void *)callback_function,(void *)key)<0)
         {
             perror("Error creating thread");
             return ERRPTHR;
         }
-    }else if(answer==0){
-        return DENIED;
     }else{
         return answer;
     }

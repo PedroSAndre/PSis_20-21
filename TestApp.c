@@ -164,7 +164,7 @@ int main(void)
                             }else if(aux==ERRPTHR){
                                 printf("\nCould not call thread\n");
                             }
-                            else if(aux==DENIED)
+                            else if(aux==ERRRD)
                             {
                                 printf("\nCould not find that key\n");
                             }

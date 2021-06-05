@@ -14,6 +14,8 @@ struct app_status * inicialize_app_status(void)
     dummy[0].client_ptid = -1;
     dummy[0].connection_time = time(NULL); //start of the server
     dummy[0].close_time = -1;
+    dummy[0].ison = 0;
+
     return dummy;
 }
 

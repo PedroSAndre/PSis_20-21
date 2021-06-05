@@ -337,6 +337,8 @@ void handleConnection(void *arg)
                 write(client_sock,&answer,sizeof(answer));
             }
         }
+        if(close_status(state, local_PID, client_PID, all_clients_connected) <SUCCESS)
+            printf("Error updating status\n");
     }
     else
     {
@@ -348,8 +350,7 @@ void handleConnection(void *arg)
         perror("Error closing connection\n");
     }
 
-    if(close_status(state, local_PID, client_PID, all_clients_connected) <SUCCESS)
-        printf("Error updating status\n");
+
 
     pthread_exit(NULL);
 }

@@ -131,7 +131,7 @@ int main(int argc, char ** argv)
                         aux=0;
                         for(int i=0;i<all_clients_connected;i++){
                             if(strcmp(state[i].group,input_string)==0){
-                                if(state[j[i]].close_time==-1){
+                                if(state[i].close_time==-1){
                                     aux=1;
                                 }
                             }
@@ -153,7 +153,7 @@ int main(int argc, char ** argv)
             aux=AuthServerCom(GET,input_string,secret,Authserver_sock,Authserver_sock_addr);
             if(aux==ERRRD)
             {
-                printf("No group %s on Auth-server\n");
+                printf("No group %s on Auth-server\n",input_string);
             }
             else if(aux==SUCCESS)
             {
@@ -233,7 +233,7 @@ void acceptConnections(void *arg)
 void handleConnection(void *arg)
 {
     int client_sock;
-    int answer;
+    int answer=0;
     int client_PID;
     int cycle = 1;
     int ison=1;
@@ -251,6 +251,8 @@ void handleConnection(void *arg)
 
     local_PID = pthread_self();
 
+
+    write(client_sock,&answer,sizeof(answer));
     read(client_sock,&client_PID,sizeof(client_PID));
     read(client_sock,group_id,(group_id_max_size*sizeof(char)));
     read(client_sock,secret,(secret_max_size*sizeof(char)));

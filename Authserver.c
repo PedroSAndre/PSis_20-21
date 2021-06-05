@@ -158,7 +158,7 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
             return NULL;
         }
         Current=malloc(sizeof(struct Message));
-        if(Current=NULL){
+        if(Current==NULL){
             free(group);
             *err=ERRMALLOC;
             return NULL;
@@ -255,7 +255,7 @@ void generate_secret(char * secret){
 
 }
 
-void delete_All_Messages(struct Message * Main){
+void delete_All_messages(struct Message * Main){
     struct Message * Current;
     while(Main!=NULL){
         Main=deleteMessage(Main,Main);

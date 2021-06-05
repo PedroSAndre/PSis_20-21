@@ -91,10 +91,10 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
 
     if(request==GET || request==PUT)
     {
-        recvfrom(Authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
-        if(strcmp(buf, "\0") == 0 || strlen(buf) != secret_max_size)
+        recvfrom(Authserver_sock,buf,secret_max_size*sizeof(char),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
+        pthread_mutex_unlock(&acess_auth);
+        if(strcmp(buf, "\0") == 0)
         {
-            pthread_mutex_unlock(&acess_auth);
             return ERRRD;
         }
         strcpy(secret,buf);
@@ -102,14 +102,14 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
     }
     else
     {
+        //incomplete
         recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
+        pthread_mutex_unlock(&acess_auth);
         if(request==CMP){
             strcpy(buf,secret);
             sendto(Authserver_sock,buf,secret_max_size*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,len);
             recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
         }
     }
-
-    pthread_mutex_unlock(&acess_auth);
     return answer;
 }

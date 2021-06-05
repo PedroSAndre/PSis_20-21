@@ -1,6 +1,5 @@
 #include "Basic.h"
 #include "Authserver.h"
-#include <arpa/inet.h>
 
 #define SKIPWRTANSWER 2
 
@@ -13,7 +12,7 @@
                     */
 int main(int argc, char**argv)
 {
-    int * err;
+    int err;
     int answer;
     int kvs_authserver_sock;
     int kvs_localserver_sock;
@@ -123,7 +122,7 @@ int main(int argc, char**argv)
                     answer=compareHashGroup(Current->group,Current->secret);
                     Main=deleteMessage(Current,Main);
                 }else{
-                    answer=1;
+                    answer=SUCCESS;
                 }
             }else if(answer==0){
                 answer=DENIED;
@@ -138,7 +137,7 @@ int main(int argc, char**argv)
     }
 
     delete_All_messages(Main);
-    delete_ALL_Entries();
+    delete_All_Entries();
     
     if(close(kvs_authserver_sock)<0)
         {

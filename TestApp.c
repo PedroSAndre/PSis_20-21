@@ -128,7 +128,7 @@ int main(void)
                             printf("Insert the key of the entry you want to delete: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
-                            aux=delete_value(key)
+                            aux=delete_value(key);
                             if(aux==1){
                                 printf("Successfully deleted entry of key %s",key);
                             }else if(aux==DISCONNECTED){
@@ -148,7 +148,7 @@ int main(void)
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
                             printf("(Only a simple callback function is used)\n");
-                            aux=register_callback(key,f)
+                            aux=register_callback(key,f);
                             if(aux==1)
                             {
                                 printf("\nThread has been called\n");
@@ -163,6 +163,10 @@ int main(void)
                                 break;
                             }else if(aux==ERRPTHR){
                                 printf("\nCould not call thread\n");
+                            }
+                            else if(aux==DENIED)
+                            {
+                                printf("\nCould not find that key\n");
                             }
                         }else if(selector == '5'){//Close connection
                             printf("Are you sure you want to leave the connection to group %s?\n",group);

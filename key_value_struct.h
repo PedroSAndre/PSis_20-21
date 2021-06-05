@@ -35,4 +35,6 @@ int hashDelete_key_value(struct key_value * table, char * key);
 void hashFree_key_value(struct key_value * table);
 
 int hashWaitChange_key_value(struct key_value * table, char * key);
+
+void signal_all_callback(struct key_value * table);
 #endif

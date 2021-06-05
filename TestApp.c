@@ -87,7 +87,11 @@ int main(void)
                                     aux=-7;
                                 }
                                 break;
-                            }else
+                            }else if(aux==ERRMALLOC){
+                                printf("\nServer is unable to create key-value due to lack of memory\n");
+                            }else{
+                                printf("\nSomething went wrong\n");
+                            }
                         }else if(selector=='2'){//Get value
                             printf("Insert the key of the entry you want to access: ");
                             fgets(key, key_max_size, stdin);
@@ -109,26 +113,48 @@ int main(void)
                                 printf("Shutting down program due to lack of memory\n");
                                 aux=0;
                                 break;
-                            }else if(aux==DENIED){
-                                
+                            }else if(aux==ERRRD){
+                                printf("\nkey not found\n");
                             }
                         }else if(selector=='3'){//Delete value
                             printf("Insert the key of the entry you want to delete: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
-                            if(delete_value(key)==1){
+                            aux=delete_value(key)
+                            if(aux==1){
                                 printf("Successfully deleted entry of key %s",key);
-                            }else{
-                                printf("Something went wrong\n");
+                            }else if(aux==DISCONNECTED){
+                                printf("\nLocal Server is disconnecting. Do you want to reconnect to a group?\n");
+                                printf("Retry(r) or Leave(l): ");
+                                fgets(buf, input_string_max_size, stdin);
+                                sscanf(buf,"%c\n",&selector);
+                                if(selector=='r'){
+                                    aux=-7;
+                                }
+                                break;
+                            }else if(aux==ERRRD){
+                                printf("\nkey not found\n");
                             }
                         }else if(selector=='4'){//Register callback
                             printf("Insert the key of the entry you want to monitor: ");
                             fgets(key, key_max_size, stdin);
                             key[strlen(key)-1]='\0';
                             printf("(Only a simple callback function is used)\n");
-                            if(register_callback(key,f)!=1)
+                            aux=register_callback(key,f)
+                            if(aux==1)
                             {
-                                printf("Something went wrong\n");
+                                printf("\nThread has been called\n");
+                            }else if(aux==DISCONNECTED){
+                                printf("\nLocal Server is disconnecting. Do you want to reconnect to a group?\n");
+                                printf("Retry(r) or Leave(l): ");
+                                fgets(buf, input_string_max_size, stdin);
+                                sscanf(buf,"%c\n",&selector);
+                                if(selector=='r'){
+                                    aux=-7;
+                                }
+                                break;
+                            }else if(aux==ERRPTHR){
+                                printf("\nCould not call thread\n");
                             }
                         }else if(selector == '5'){//Close connection
                             printf("Are you sure you want to leave the connection to group %s?\n",group);
@@ -138,7 +164,8 @@ int main(void)
                             if(selector != 'y'){
                                 aux=6;
                             }else{
-                                if(close_connection()==1){
+                                aux=close_connection();
+                                if(aux==1||aux==DISCONNECTED){
                                     printf("Connection closed\n");
                                     selector='5';
                                     aux=1;

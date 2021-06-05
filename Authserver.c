@@ -40,7 +40,7 @@ int CreateUpdateEntry(char * group,char *secret){
     while(Current!=NULL){
 
         if(strcmp(Current->group,group)==0){
-            strcpy(Current->secret,secret);
+            strcpy(secret,Current->secret);
             return 1;
         }
         if(Current->next==NULL){

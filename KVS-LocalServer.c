@@ -295,6 +295,7 @@ void handleConnection(void *arg)
         {
             answer = WAIT;
             key[0] = '\0';
+            write(client_sock,&answer,sizeof(int));
             read(client_sock,&answer,sizeof(answer));
             if(answer == WAIT)
                 continue;

@@ -42,6 +42,11 @@ int establish_connection (char * group_id, char * secret)
         perror("Error connecting client socket");
         return ERRCONNECTING;
     }
+
+    if(read(client_sock,&answer,sizeof(int))==-1){
+        perror("Local disconnected unexpectedly");
+        return DISCONNECTED;
+    }
     
 
 
@@ -83,12 +88,18 @@ int establish_connection (char * group_id, char * secret)
 Como explicado no enunciado, esta função coloca um valor para o valor key.
 Retorna 1 em caso de sucesso ou uma flag de erro definida no Basic.h
 
-Esta função cria primeiro uma conecção com sockets tipo UNIX STREAM and sends a group and secret which will be subject to authentication. 
-If authentication was sucessful, returns 0*/
+*/
 int put_value(char * key, char * value)
 {
-    int buf=PUT;
+    int buf;
     long int vallen=strlen(value);
+
+    if(read(client_sock,&buf,sizeof(int))==-1){
+        perror("Local disconnected unexpectedly");
+        return DISCONNECTED;
+    }
+
+    buf=PUT;
 
     if(write(client_sock,&buf,sizeof(int))==-1){
         perror("write(flag:PUT)  error");
@@ -113,7 +124,7 @@ int put_value(char * key, char * value)
     if(read(client_sock,&buf,sizeof(int))==-1)
     {
         perror("No answer from local server");
-        return ERRRD;
+        return DISCONNECTED;
     }
 
     return buf;
@@ -123,7 +134,14 @@ int put_value(char * key, char * value)
 int get_value(char * key, char ** value)
 {
     long int answer;
-    int buf=GET;
+    int buf;
+
+    if(read(client_sock,&buf,sizeof(int))==-1){
+        perror("Local disconnected unexpectedly");
+        return DISCONNECTED;
+    }
+
+    buf=GET;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
         perror("write(flag:GET)  error");
@@ -140,7 +158,7 @@ int get_value(char * key, char ** value)
     if(read(client_sock,&answer,sizeof(answer))==-1)
     {
         perror("No answer from local server");
-        return ERRRD;
+        return DISCONNECTED;
     }
     if(answer==-1){
         perror("No key");
@@ -159,7 +177,7 @@ int get_value(char * key, char ** value)
     if(read(client_sock,*value,answer*sizeof(char))==-1)
     {
         perror("No answer from local server");
-        return ERRRD;
+        return DISCONNECTED;
     }
 
     return 1;
@@ -168,7 +186,14 @@ int get_value(char * key, char ** value)
 
 int delete_value(char * key)
 {
-    int buf=DEL;
+    int buf;
+
+    if(read(client_sock,&buf,sizeof(int))==-1){
+        perror("Local disconnected");
+        return DISCONNECTED;
+    }
+
+    buf=DEL;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
         perror("write(flag:DEL)  error");
@@ -182,15 +207,22 @@ int delete_value(char * key)
     if(read(client_sock,&buf,sizeof(int))==-1)
     {
         perror("No answer from local server");
-        return ERRRD;
+        return DISCONNECTED;
     }
 
     return buf;
 }
 
 int register_callback(char * key, void (*callback_function)(char *)){
-    int answer=CALL;
+    int answer;
     pthread_t thread_id;
+
+    if(read(client_sock,&answer,sizeof(int))==-1){
+        perror("Local disconnected unexpectedly");
+        return DISCONNECTED;
+    }
+
+    answer=CALL;
     
     if(write(client_sock,&answer,sizeof(int))==-1){
         perror("write(flag:CALL)  error");
@@ -203,7 +235,7 @@ int register_callback(char * key, void (*callback_function)(char *)){
     }
     if(read(client_sock, &answer,sizeof(int)) ==-1){
         perror("No answer from local server");
-        return ERRRD;
+        return DISCONNECTED;
     }
     
     if(answer==1){
@@ -212,17 +244,24 @@ int register_callback(char * key, void (*callback_function)(char *)){
             perror("Error creating thread");
             return ERRPTHR;
         }
-    }else if(answer==DISCONNECTED){
-        printf("Something went wrong\n");
     }else if(answer==0){
         return DENIED;
+    }else{
+        printf("Something went wrong\n");
     }
     return 1;
 }
 
 int close_connection()
 {
-    int buf=CLS;
+    int buf;
+
+    if(read(client_sock,&buf,sizeof(int))==-1){
+        perror("Local disconnected unexpectedly");
+        return DISCONNECTED;
+    }
+
+    buf=CLS;
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
         perror("write(flag:CLS)  error");

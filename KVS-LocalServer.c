@@ -194,7 +194,6 @@ void acceptConnections(void *arg)
 {
     int kvs_localserver_sock;
     int client_sock=0;
-    struct sockaddr_un kvs_localserver_sock_addr;
     pthread_t temp_PID;
 
     kvs_localserver_sock = createAndBind_UNIX_stream_Socket(server_addr);
@@ -214,7 +213,7 @@ void acceptConnections(void *arg)
     while(server_status)
     {
         client_sock = accept_connection_timeout(&(kvs_localserver_sock));
-        if(client_sock != -ERRTIMEOUT)
+        if(client_sock != ERRTIMEOUT)
         {
             if(pthread_create(&temp_PID,NULL,(void *)&handleConnection,(void *)&client_sock)<SUCCESS)
             {
@@ -237,21 +236,16 @@ void handleConnection(void *arg)
     int answer;
     int client_PID;
     int cycle = 1;
+    int ison=1;
     long int value_size = 0;
     pthread_t local_PID;
     struct key_value * local_key_value_table;
 
-
-    
-
-    char * group_id;
-    char * secret;
-    char * key;
+    char group_id[group_id_max_size];
+    char secret[secret_max_size];
+    char key[key_max_size];
     char * value;
-    int ison=1;
-    group_id = malloc(group_id_max_size*sizeof(char));
-    secret = malloc(secret_max_size*sizeof(char));
-    key = malloc(key_max_size*sizeof(char));
+
 
     client_sock = *((int *)arg);
 
@@ -262,35 +256,25 @@ void handleConnection(void *arg)
     read(client_sock,secret,(secret_max_size*sizeof(char)));
 
 
-
     answer=AuthServerCom(CMP,group_id,secret,Authserver_sock,Authserver_sock_addr);
-    answer--;
-    write(client_sock,&answer,sizeof(answer));
 
-    //CONFLICT HERE
-
-    
-
-
-
-    if (answer==0){
+    if(answer==SUCCESS)
+    {
         pthread_mutex_lock(&acess_group);
-        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,&ison,deleting_group) == -1)
-            pthread_mutex_unlock(&acess_group);
-            printf("Error updating status");
-            answer = -1;
-            write(client_sock,&answer,sizeof(answer));
-            close(client_sock);
-            pthread_exit(NULL);
-        local_key_value_table = hashGet_group_table(groups, group_id);
+        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,&ison,deleting_group) <SUCCESS)
+        {
+            printf("Error updating status\nNot allowing new connection\n\n");
+            cycle=0;
+            answer = DENIED;
+        }
         pthread_mutex_unlock(&acess_group);
+        local_key_value_table = hashGet_group_table(groups, group_id);
         if(local_key_value_table == NULL)
         {
-            answer = -1;
-            write(client_sock,&answer,sizeof(answer));
-            close(client_sock);
-            pthread_exit(NULL);
+            cycle=0;
+            answer = ERRRD;
         }
+        write(client_sock,&answer,sizeof(answer));
         
         //Connection cycle
         while(server_status == 1 && cycle && ison)
@@ -298,7 +282,7 @@ void handleConnection(void *arg)
             answer = WAIT;
             key[0] = '\0';
             write(client_sock,&answer,sizeof(int));
-            read(client_sock,&answer,sizeof(answer));
+            read(client_sock,&answer,sizeof(answer)); //adicionar timeout aqui
             if(answer == WAIT)
                 continue;
             else if(answer == PUT)
@@ -308,62 +292,62 @@ void handleConnection(void *arg)
                 value = malloc(value_size*sizeof(char));
                 read(client_sock,value,value_size*sizeof(char));
                 answer = hashInsert_key_value(local_key_value_table,key,value);
-                answer++;
                 write(client_sock,&answer,sizeof(answer));
-                
                 free(value);
             }
             else if(answer == GET)
             {
-                //CONFLICT HERE
                 read(client_sock,key,key_max_size*sizeof(char));
                 value = hashGet_key_value(local_key_value_table,key);
                 if(value == NULL)
-                    value_size = 0;
+                    value_size = ERRRD;
                 else
                     value_size = strlen(value);
                 write(client_sock,&value_size,sizeof(value_size));
-                write(client_sock,value,value_size*sizeof(char));
-                free(value);
+                if(value != NULL)
+                {
+                    write(client_sock,value,value_size*sizeof(char));
+                    free(value);
+                }
             }
             else if(answer == DEL)
             {
-                //CONFLICT HERE
                 read(client_sock,key,key_max_size*sizeof(char));
                 answer = hashDelete_key_value(local_key_value_table,key);
-                answer++; //Updating from one format to another
                 write(client_sock,&answer,sizeof(answer));
             }
             else if(answer == CLS)
             {
                 cycle = 0;
-            }else if(answer==CALL){
+            }
+            else if(answer==CALL)
+            {
                 read(client_sock,key,key_max_size*sizeof(char));
                 answer=hashWaitChange_key_value(local_key_value_table,key);
                 if(ison!=1){
                     answer=DISCONNECTED;
                 }
                 write(client_sock,&answer,sizeof(answer));
-            }else{
+            }
+            else
+            {
                 answer=WRGREQ;
                 write(client_sock,&answer,sizeof(answer));
             }
         }
     }
-
-    //Delete Status
-
-    free(group_id);
-    free(secret);
-    free(key);
+    else
+    {
+        write(client_sock,&answer,sizeof(answer));
+    }
     
     if(close(client_sock)<0)
     {
-        perror("Error closing connection");
+        perror("Error closing connection\n");
     }
 
-    if(close_status(state, local_PID, client_PID, all_clients_connected) == -1)
-        printf("Error updating status");
+    if(close_status(state, local_PID, client_PID, all_clients_connected) <SUCCESS)
+        printf("Error updating status\n");
 
     pthread_exit(NULL);
 }

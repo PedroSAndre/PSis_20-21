@@ -122,12 +122,12 @@ int compareHashGroup(char * group, char * checksecret){
     secret=getGroupSecret(group);
     if(secret!=NULL){
         if(strcmp(secret,checksecret)==0){
-            return 1;
+            return SUCCESS;
         }else{
-            return 0;
+            return DENIED;
         }
     }else{
-        return DENIED;
+        return ERRRD;
     }
     
 }

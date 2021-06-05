@@ -17,7 +17,7 @@ int createAndBind_UNIX_stream_Socket(char * sock_addr)
     sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if(sock==-1){
         perror("Error creating socket\n");
-        return -1;
+        return ERRSCKCREATION;
     }
 
     //Binding address
@@ -27,7 +27,7 @@ int createAndBind_UNIX_stream_Socket(char * sock_addr)
     if(bind(sock, (struct sockaddr *)&struct_sock_addr, sizeof(struct_sock_addr)) < 0)
     {
         perror("Error binding socket\n");
-        return -1;
+        return ERRSCKBIND;
     }
 
     return sock;

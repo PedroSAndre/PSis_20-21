@@ -21,11 +21,11 @@ struct app_status * inicialize_app_status(void)
 int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group,int*ison, char * deleting_group)
 {
     if(strcmp(deleting_group,group)==0) {
-        return -1;
+        return DENIED;
     } 
     dummy = realloc(dummy,sizeof(struct app_status));
     if(dummy == NULL)
-        return -1;
+        return ERRMALLOC;
     *clients_connected = *clients_connected+1;
     dummy[*clients_connected].client_ptid = client_ptid;
     dummy[*clients_connected].process_ptid = process_ptid;
@@ -33,7 +33,7 @@ int add_status(struct app_status * dummy, pthread_t process_ptid, int client_pti
     dummy[*clients_connected].close_time = -1;
     strcpy(dummy[*clients_connected].group,group);
     dummy[*clients_connected].ison = ison;
-    return 0;
+    return SUCCESS;
 }
 
 //Returns 0 in sucess, -1 in failure
@@ -44,10 +44,10 @@ int close_status(struct app_status * dummy, pthread_t process_ptid, int client_p
         if(dummy[i].client_ptid == client_ptid && dummy[i].process_ptid == process_ptid && dummy[i].close_time == -1)
         {
             dummy[i].close_time = time(NULL);
-            return 0;
+            return SUCCESS;
         }
     }
-    return -1;
+    return ERRRD;
 }
 
 void print_status(struct app_status * dummy, int clients_connected)
@@ -68,6 +68,7 @@ void print_status(struct app_status * dummy, int clients_connected)
         printf("\n");
     }
     printf("\n");
+    return;
 }
 
 void send_kick_out_order(struct app_status * dummy, int clients_connected,char * group)

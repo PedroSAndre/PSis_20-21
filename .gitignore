@@ -55,4 +55,4 @@ dkms.conf
 projecto-v1.pdf
 enunciado/
 .vscode
-sockets/
+sockets/*

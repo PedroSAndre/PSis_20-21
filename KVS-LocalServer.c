@@ -232,7 +232,6 @@ void handleConnection(void *arg)
     int answer=0;
     int client_PID;
     int cycle = 1;
-    int ison=1;
     long int value_size = 0;
     pthread_t local_PID;
     struct key_value * local_key_value_table;
@@ -258,7 +257,7 @@ void handleConnection(void *arg)
     if(answer==SUCCESS)
     {
         pthread_mutex_lock(&acess_group);
-        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,&ison,deleting_group) <SUCCESS)
+        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,deleting_group) <SUCCESS)
         {
             printf("Error updating status\nNot allowing new connection\n\n");
             cycle=0;
@@ -319,9 +318,13 @@ void handleConnection(void *arg)
             else if(answer==CALL)
             {
                 read(client_sock,key,key_max_size*sizeof(char));
-                answer=hashWaitChange_key_value(local_key_value_table,key);
-                if(ison!=1){
-                    answer=DISCONNECTED;
+                if(strcmp(group_id,deleting_group)!=0)
+                {
+                    answer=hashWaitChange_key_value(local_key_value_table,key);
+                }
+                else
+                {
+                    answer = DISCONNECTED;
                 }
                 write(client_sock,&answer,sizeof(answer));
             }

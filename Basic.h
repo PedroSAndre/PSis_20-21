@@ -38,4 +38,17 @@
 #define CMP 5
 #define CALL 6
 
+//Error Flags
+#define DISCONNECTED -1
+#define ERRSCKCREATION -2
+#define ERRCONNECTING -3
+#define ERRWRT -4
+#define ERRRD -5
+#define DENIED -6
+#define ERRMALLOC -7
+#define ERRPTHR -8
+#define ERRCLS -9
+#define ERRSCKBIND -10
+#define WRNGARG -11
+
 #endif

@@ -31,6 +31,8 @@ int main(int argc, char ** argv)
     char * port_str;
     char * authaddr_str;
     char * secret = malloc(secret_max_size*sizeof(char));
+    int *j;
+    struct key_value * local_key_value_table;
 
 
     int selector;
@@ -119,12 +121,31 @@ int main(int argc, char ** argv)
             }else if(aux==1){
                     //CONFLICT HERE
                     pthread_mutex_lock(&acess_group);
+                    local_key_value_table = hashGet_group_table(groups, input_string);
+                    if(local_key_value_table == NULL)
+                    {
+                        pthread_mutex_unlock(&acess_group);
+                        pthread_exit(NULL);
+                    }
                     kick_out_clients(state,all_clients_connected,input_string);
-                    if(hashDelete_group_table(groups, input_string) == 0)
-                        printf("Group deleted with sucess\n\n");
-                    else
+                    if(hashDelete_group_table(groups, input_string) != 0){
+                        pthread_mutex_unlock(&acess_group);
                         printf("Error deleting selected group\n\n");
-                    pthread_mutex_lock(&acess_group);
+                    }else{
+                        pthread_mutex_unlock(&acess_group);
+                        printf("Waiting for clients to be disconnected...\n");
+                        while(aux){
+                            aux=0;
+                            for(int i=0;i<all_clients_connected;i++){
+                                if(strcmp(state[i].group,input_string)==0){
+                                    if(state[j[i]].close_time==-1){
+                                        aux=1;
+                                    }
+                                }
+                            }
+                        }
+                        printf("Group deleted sucessfully\n\n");
+                    }
                 
             }else{
                 printf("Something went wrong in the Auth Server\n");
@@ -279,16 +300,27 @@ void handleConnection(void *arg)
                 continue;
             else if(answer == PUT)
             {
-                read(client_sock,key,key_max_size*sizeof(char));
+                if(!ison || read(client_sock,key,key_max_size*sizeof(char))<=0){
+                    break;
+                }
                 read(client_sock,&value_size,sizeof(value_size));
+                if(!ison){
+                    break;
+                }
                 value = malloc(value_size*sizeof(char));
                 read(client_sock,value,value_size*sizeof(char));
+                if(!ison){
+                    free(value);
+                    break;
+                }
                 answer = hashInsert_key_value(local_key_value_table,key,value);
                 answer++;
+                pthread_mutex_lock(&acess_group);
                 if(!ison){
-                    answer=-10;
+                    answer=DISCONNECTED;
                 }
                 write(client_sock,&answer,sizeof(answer));
+                pthread_mutex_lock(&acess_group);
                 free(value);
             }
             else if(answer == GET)
@@ -318,7 +350,9 @@ void handleConnection(void *arg)
             }else if(answer==CALL){
                 read(client_sock,key,key_max_size*sizeof(char));
                 answer=hashWaitChange_key_value(local_key_value_table,key);
-                
+                if(!ison){
+                    answer=DISCONNECTED;
+                }
                 write(client_sock,&answer,sizeof(answer));
             }else{
                 answer=-3;
@@ -328,6 +362,10 @@ void handleConnection(void *arg)
     }
 
     //Delete Status
+
+    free(group_id);
+    free(secret);
+    free(key);
     
     if(close(client_sock)<0)
     {

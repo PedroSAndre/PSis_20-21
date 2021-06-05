@@ -15,17 +15,16 @@ int establish_connection (char * group_id, char * secret)
     int answer;
 
     client_addr=malloc(20*sizeof(char));
+    if(client_addr==NULL){
+        perror("Error alocating memory");
+        return ERRMALLOC;
+    }
     
 
     client_sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if(client_sock==-1){
         printf("Error creating client socket\n");
-        return -1;
-    }
-    kvs_localserver_sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if(kvs_localserver_sock==-1){
-        printf("Error creating kvs_localserver socket\n");
-        return -10;
+        return ERRSCKCREATION;
     }
 
 
@@ -44,34 +43,38 @@ int establish_connection (char * group_id, char * secret)
     if(connect(client_sock, (struct sockaddr *)&kvs_localserver_sock_addr, sizeof(kvs_localserver_sock_addr)) < 0)
     {
         perror("Error connecting client socket");
-        return -3;
+        return ERRCONNECTING;
     }
     
 
 
     if(write(client_sock,&client_pid,sizeof(int))==-1){
         perror("write(pid) error");
-        return -4;
+        return ERRWRT;
     }
 
     if(write(client_sock,group_id,group_id_max_size*sizeof(char))==-1){
         perror("write() error");
-        return -4;
+        return ERRWRT;
     }
 
     if(write(client_sock,secret,secret_max_size*sizeof(char))==-1){
         perror("write() error");
-        return -5;
+        return ERRWRT;
     }
 
     if(read(client_sock,&answer,sizeof(answer))==-1)
     {
         perror("No answer from local server");
-        return -6;
+        return ERRRD;
+    }
+    if(answer==DISCONNECTED){
+        perror("Disconnected by server...");
+        return DISCONNECTED;
     }
     if(answer<0){
         printf("Request denied\n");
-        return -7;
+        return DENIED;
     }
     return 0;
 }
@@ -85,28 +88,28 @@ int put_value(char * key, char * value)
 
     if(write(client_sock,&buf,sizeof(int))==-1){
         perror("write(flag:PUT)  error");
-        return -1;
+        return ERRWRT;
     }
 
     if(write(client_sock,key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
-        return -2;
+        return ERRWRT;
     }
 
     if(write(client_sock,&vallen,sizeof(long int))==-1){
         perror("write(vallen)  error");
-        return -3;
+        return ERRWRT;
     }
 
     if(write(client_sock,value,vallen*sizeof(char))==-1){
         perror("write(value)  error");
-        return -4;
+        return ERRWRT;
     }
 
     if(read(client_sock,&buf,sizeof(int))==-1)
     {
         perror("No answer from local server");
-        return -4;
+        return ERRRD;
     }
 
     return buf;
@@ -120,12 +123,12 @@ int get_value(char * key, char ** value)
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
         perror("write(flag:GET)  error");
-        return -1;
+        return ERRWRT;
     }
 
     if(write(client_sock,key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
-        return -1;
+        return ERRWRT;
     }
 
 
@@ -133,26 +136,26 @@ int get_value(char * key, char ** value)
     if(read(client_sock,&answer,sizeof(answer))==-1)
     {
         perror("No answer from local server");
-        return -4;
+        return ERRRD;
     }
     if(answer==-1){
         perror("No key");
-        return -5;
+        return DENIED;
     }else if(answer==0){
         perror("No value");
-        return -5;
+        return -10;
     }
 
     *value = malloc (answer*sizeof(char));
     if (*value == NULL) {
         perror("Unable to alocate memory");
-        return -6;
+        return ERRMALLOC;
     }
 
     if(read(client_sock,*value,answer*sizeof(char))==-1)
     {
         perror("No answer from local server");
-        return -4;
+        return ERRRD;
     }
 
     return 1;
@@ -165,17 +168,17 @@ int delete_value(char * key)
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
         perror("write(flag:DEL)  error");
-        return -1;
+        return ERRWRT;
     }
     if(write(client_sock,key,key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
-        return -2;
+        return ERRWRT;
     }
 
     if(read(client_sock,&buf,sizeof(int))==-1)
     {
         perror("No answer from local server");
-        return -4;
+        return ERRRD;
     }
 
     return buf;
@@ -187,26 +190,28 @@ int register_callback(char * key, void (*callback_function)(char *)){
     
     if(write(client_sock,&answer,sizeof(int))==-1){
         perror("write(flag:CALL)  error");
-        return -1;
+        return ERRWRT;
     }
 
     if(write(client_sock,key, key_max_size* sizeof(char))==-1){
         perror("write(key)  error");
-        return -1;
+        return ERRWRT;
     }
     if(read(client_sock, &answer,sizeof(int)) ==-1){
         perror("No answer from local server");
-        return -2;
+        return ERRRD;
     }
     
     if(answer==1){
         if(pthread_create(&thread_id,NULL,(void *)callback_function,(void *)key)<0)
         {
             perror("Error creating thread");
-            return -3;
+            return ERRPTHR;
         }
-    }else{
+    }else if(answer==DISCONNECTED){
         printf("Something went wrong\n");
+    }else if(answer==0){
+        return DENIED;
     }
     return 1;
 }
@@ -217,12 +222,12 @@ int close_connection()
 
     if(write(client_sock,&buf,sizeof(buf))==-1){
         perror("write(flag:CLS)  error");
-        return -1;
+        return ERRWRT;
     }
     if(close(client_sock)<0)
     {
         perror("Error closing connection");
-        return -2;
+        return ERRCLS;
     }
     return 1;
 }

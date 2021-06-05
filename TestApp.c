@@ -23,9 +23,7 @@ int main(void)
 
 
     while(aux!=0){
-        printf("Do you want to connect to a group?(y/n)\n");
-        printf("n will close the program\n");
-        printf("User: ");
+        printf("Do you want to connect to a group?(n will close the program)(y/n):");
         fgets(buf, input_string_max_size, stdin);
         sscanf(buf,"%c\n",&selector);
         if(selector=='y'){

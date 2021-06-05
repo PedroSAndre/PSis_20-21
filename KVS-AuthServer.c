@@ -2,13 +2,12 @@
 #include "Authserver.h"
 #include <arpa/inet.h>
 
-
+#define SKIPWRTANSWER 2
 
 int main(int argc, char**argv)
 {
-    int u, aux;
+    int * err;
     int answer;
-    int request, ident;
     int kvs_authserver_sock;
     int kvs_localserver_sock;
     struct sockaddr_in kvs_authserver_sock_addr;
@@ -19,26 +18,23 @@ int main(int argc, char**argv)
 
 
 
-    char * group=malloc(group_id_max_size*sizeof(char));
+    char group[group_id_max_size];
     char newsecret[secret_max_size];
     char * secret;
-    char * buf;
+    char buf[group_id_max_size+2];
 
     srand(time(NULL));
 
     if(argc !=2){
         perror("Wrong arguments");
-        return 0;
+        return WRNGARG;
     }
-    
-
-    buf = malloc((group_id_max_size+2)*sizeof(char));
 
     //Creating socket
     kvs_authserver_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if(kvs_authserver_sock==-1){
         perror("Error creating client socket\n");
-        return -1;
+        return ERRSCKCREATION;
     }
 
     //Binding address
@@ -52,7 +48,7 @@ int main(int argc, char**argv)
     if(bind(kvs_authserver_sock,(struct sockaddr*) &kvs_authserver_sock_addr, sizeof(struct sockaddr_in)) < 0)
     {
         perror("Error binding socket\n");
-        return -2;
+        return ERRSCKBIND;
     }
 
     printf("Sucessfully connected\n");
@@ -67,30 +63,29 @@ int main(int argc, char**argv)
     while(1){
         answer=0;
 
-        if(recvfrom(kvs_authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr *)&kvs_localserver_sock_addr,&len)<0)
+        if(recvfrom(kvs_authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr *)&kvs_localserver_sock_addr,&len)==-1)
         {
             perror("Error receving connection\n");
-            return -3;
+            break;
         }
         printf("Received: %s\n",buf);
         
 
-        Current=recoverClientMessage(buf,kvs_localserver_sock_addr,&Main);
+        Current=recoverClientMessage(buf,kvs_localserver_sock_addr,&Main,&err);
 
         if(Current==NULL){
+            if(err==ERRMALLOC){
+                break;
+            }
             printf("Current NULL\n");
-            answer=-1;
+            answer=DENIED;
         }else{
             if(strcmp(Current->group,"\0")==0){
                 Current->request=WAIT;
                 free(Current);
-                answer=-1;
-            }
-            if (Current->request==PUT){
+                answer=DENIED;
+            }else if (Current->request==PUT){
                 generate_secret(newsecret);
-                if(newsecret==NULL){
-                    answer=PUT;
-                }
                 strcpy(Current->secret,newsecret);
                 if(CreateUpdateEntry(Current->group,Current->secret)==1){
 
@@ -98,9 +93,10 @@ int main(int argc, char**argv)
                     printf("Secret:%s\n",newsecret);
 
                     free(Current);
-                    answer=GET;
+                    answer=SKIPWRTANSWER;
                 }else{
-                    answer=GET;
+                    free(Current);
+                    break;
                 }
             //Get secret
             }else if(Current->request==GET){
@@ -110,7 +106,7 @@ int main(int argc, char**argv)
                 printf("Secret:%s\n",secret);
 
                 free(Current);
-                answer=GET;
+                answer=SKIPWRTANSWER;
             //Delete entry for group
             }else if(Current->request==DEL){
                 answer=DeleteEntry(Current->group);
@@ -123,21 +119,24 @@ int main(int argc, char**argv)
                     answer=1;
                 }
             }else if(answer==0){
-                answer=-1;
+                answer=DENIED;
             }
         }
 
         
-        if(answer!=GET){
+        if(answer!=SKIPWRTANSWER){
             sendto(kvs_authserver_sock,&answer,sizeof(int),0,(struct sockaddr *)&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
             printf("Answer:%d\n",answer);
         }   
     }
+
+    delete_All_messages(Main);
+    delete_ALL_Entries();
     
     if(close(kvs_authserver_sock)<0)
         {
             perror("Error closing connection");
-            return -5;
+            return ERRCLS;
         }
     return 0;
 }

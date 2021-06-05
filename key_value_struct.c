@@ -252,14 +252,14 @@ int hashWaitChange_key_value(struct key_value * table, char * key)
     int aux;
     struct key_value * aux2;
     aux = hashCode_key_value(key);
+    pthread_mutex_lock(&(table[aux].mutex));
     if(strcmp(table[aux].key, key) == 0) //Same key
-    {
-        pthread_mutex_trylock(&(table[aux].mutex));
-        if(aux2->signal==0){
-            aux2->signal=1;
+    {  
+        if(table[aux].signal==0){
+            table[aux].signal=1;
         }
-        pthread_cond_wait(&(aux2->cond),&(table[aux].mutex));
-        pthread_mutex_unlock(&(aux2->mutex));
+        pthread_cond_wait(&(table[aux].cond),&(table[aux].mutex));
+        pthread_mutex_unlock(&(table[aux].mutex));
         return 1;
     }
     else
@@ -271,16 +271,16 @@ int hashWaitChange_key_value(struct key_value * table, char * key)
         }
         if(strcmp(aux2->key, key) == 0)
         {
-            pthread_mutex_trylock(&(table->mutex));
             if(aux2->signal==0){
                 aux2->signal=1;
             }
-            pthread_cond_wait(&(aux2->cond),&(aux2->mutex));
-            pthread_mutex_unlock(&(aux2->mutex));
+            pthread_cond_wait(&(aux2->cond),&(table[aux].mutex));
+            pthread_mutex_unlock(&(table[aux].mutex));
             return 1;
         }
         else
         {
+            pthread_mutex_unlock(&(table[aux].mutex));
             return 0;
         }   
     }

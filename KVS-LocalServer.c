@@ -92,12 +92,16 @@ int main(int argc, char ** argv)
             printf("Insert the new group ID: ");
             fgets(input_string, group_id_max_size, stdin);
             input_string[strlen(input_string)-1]='\0'; //deleting \n
-
-            if(AuthServerCom(PUT,input_string,secret,Authserver_sock,Authserver_sock_addr)==ERRRD)
+            aux = AuthServerCom(PUT,input_string,secret,Authserver_sock,Authserver_sock_addr);
+            if(aux == ERRRD)
+            {
+                printf("Group not found on Auth server\n");
+            }
+            else if(aux<SUCCESS)
             {
                 printf("No response from Auth server\n");
             }
-            else
+            else if(aux==SUCCESS)
             {
                 printf("Secret of group %s\n%s\n",input_string,secret);
                 pthread_mutex_lock(&acess_group);
@@ -114,7 +118,11 @@ int main(int argc, char ** argv)
             fgets(input_string, group_id_max_size, stdin);
             input_string[strlen(input_string)-1]='\0';
             aux=AuthServerCom(DEL,input_string,secret,Authserver_sock,Authserver_sock_addr);
-            if(aux<SUCCESS)
+            if(aux == ERRRD)
+            {
+                printf("Group not found on Auth server\n");
+            }
+            else if(aux<SUCCESS)
             {
                 printf("No response from Auth server\n");
             }
@@ -122,7 +130,6 @@ int main(int argc, char ** argv)
             {
                 printf("Waiting for clients to be disconnected...\n");
                 strcpy(deleting_group, input_string);
-                
                 signal_all_callback(hashGet_group_table(groups,input_string));
                 wait_to_group_clients_to_disconect(state,all_clients_connected,input_string);
                 printf("All clients disconected\n");
@@ -149,9 +156,13 @@ int main(int argc, char ** argv)
             fgets(input_string, group_id_max_size, stdin);
             input_string[strlen(input_string)-1]='\0';
             aux=AuthServerCom(GET,input_string,secret,Authserver_sock,Authserver_sock_addr);
-            if(aux==ERRRD)
+            if(aux == ERRRD)
             {
-                printf("No group %s on Auth-server\n",input_string);
+                printf("Group not found on Auth server\n");
+            }
+            else if(aux<SUCCESS)
+            {
+                printf("No response from Auth server\n");
             }
             else if(aux==SUCCESS)
             {

@@ -75,6 +75,27 @@ int read_timeout(int * socket_af_stream, void * to_read, int size_to_read)
     return SUCCESS;
 }
 
+int recv_timeout(int * socket_af_stream, void * to_read, int size_to_read)
+{
+    struct timeval tmout;
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(*socket_af_stream, &rfds);
+    
+    tmout.tv_sec = (long)timeout;
+    tmout.tv_usec = 0;
+
+    if(select(*socket_af_stream+1, &rfds, (fd_set *) 0, (fd_set *) 0, &tmout)>0)
+    {
+        recv(*socket_af_stream,to_read,size_to_read,0);
+    }
+    else
+    {
+        return ERRTIMEOUT;
+    }
+    return SUCCESS; 
+}
+
 
 
 
@@ -98,20 +119,24 @@ int CreateAuthServerSock(char * port_str,char * authaddr_str, int * Authserver_s
 
 
 
-int AuthServerCom(int request, char * group, char * secret, int Authserver_sock, struct sockaddr_in Authserver_sock_addr ){
+int AuthServerCom(int request, char * group, char * secret, int Authserver_sock, struct sockaddr_in Authserver_sock_addr){
     char * buf = malloc((group_id_max_size+2)*sizeof(char));
     int answer=0;
-    socklen_t len = sizeof(struct sockaddr_in);
+    int aux;
 
     sprintf(buf,"%d:%s",request,group);
 
 
     pthread_mutex_lock(&acess_auth);
-    sendto(Authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,len);
+    sendto(Authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr,sizeof(struct sockaddr_in));
 
     if(request==GET || request==PUT)
     {
-        recvfrom(Authserver_sock,buf,secret_max_size*sizeof(char),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
+        aux=recv_timeout(&Authserver_sock,buf,secret_max_size*sizeof(char));
+        if(aux==ERRTIMEOUT)
+        {
+            return ERRTIMEOUT;
+        }
         pthread_mutex_unlock(&acess_auth);
         if(strcmp(buf, "\0") == 0)
         {
@@ -122,13 +147,19 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
     }
     else
     {
-        //incomplete
-        recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
+        aux=recv_timeout(&Authserver_sock,&answer,sizeof(answer));
+        if(aux == ERRTIMEOUT)
+        {
+            return ERRTIMEOUT;
+        }
         pthread_mutex_unlock(&acess_auth);
         if(request==CMP){
             strcpy(buf,secret);
-            sendto(Authserver_sock,buf,secret_max_size*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,len);
-            recvfrom(Authserver_sock,&answer,sizeof(int),0,(struct sockaddr*)&Authserver_sock_addr ,&len);
+            sendto(Authserver_sock,buf,secret_max_size*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,sizeof(struct sockaddr_in));
+            if(recv_timeout(&Authserver_sock,&answer,sizeof(answer)) == ERRTIMEOUT);
+            {
+                return ERRTIMEOUT;
+            }
         }
     }
     return answer;

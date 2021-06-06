@@ -17,7 +17,8 @@ int client_sock;
                             DISCONNECTED        - Server disconnected
                             ERRWRT              - Failed to write in socket
                             ERRRD               - Group not found
-                            DENIED              - Incorrect group or secret*/
+                            DENIED              - Incorrect group or secret
+                            ERRTIMEOUT          - Auth-Server timed-out*/
 int establish_connection (char * group_id, char * secret)
 {
     

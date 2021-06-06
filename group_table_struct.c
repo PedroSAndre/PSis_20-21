@@ -44,7 +44,7 @@ int hashInsert_group_table(struct group_table * table, char * group)
     if(strcmp(table[aux].group, "\0") == 0 || strcmp(table[aux].group, group) == 0) //Same key or no element
     {
         if(strcmp(table[aux].group, group) == 0)
-            hashFree_key_value(table[aux].key_value_table);
+            return DENIED;
         table[aux].key_value_table = hashCreateInicialize_key_value();
         if(table[aux].key_value_table == NULL)
             return ERRMALLOC;
@@ -59,10 +59,7 @@ int hashInsert_group_table(struct group_table * table, char * group)
         }
         if(strcmp(aux2->group, group) == 0) //overwriting
         {
-            hashFree_key_value(aux2->key_value_table);
-            aux2->key_value_table = hashCreateInicialize_key_value();
-            if(aux2->key_value_table == NULL)
-                return ERRMALLOC;
+            return DENIED;
         }
         else
         {

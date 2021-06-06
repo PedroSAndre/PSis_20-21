@@ -109,8 +109,11 @@ int main(int argc, char ** argv)
             {
                 printf("Secret of group %s\n%s\n",input_string,secret);
                 pthread_mutex_lock(&acess_group);
-                if(hashInsert_group_table(groups, input_string) == SUCCESS)
+                aux=hashInsert_group_table(groups, input_string);
+                if(aux == SUCCESS)
                     printf("Group %s created with sucess\n\n", input_string);
+                else if(aux==DENIED)
+                    printf("Group %s already created\n\n", input_string);
                 else
                     printf("Error alocating memory for the creation of selected group\n\n");
                 pthread_mutex_unlock(&acess_group);

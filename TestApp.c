@@ -20,8 +20,6 @@ int main(void)
     int aux=1;
     pthread_t register_callback_thread_id;
 
-
-
     while(aux!=0){
         printf("Do you want to connect to a group?(n will close the program)(y/n):");
         fgets(buf, input_string_max_size, stdin);
@@ -86,8 +84,8 @@ int main(void)
                             aux=put_value(key,value);
                             if(aux==1){
                                 printf("\nSuccessfully inserted value\n");
-                            }else if(aux==DISCONNECTED){
-                                printf("\nLocal Server is disconnecting. Do you want to reconnect to a group?\n");
+                            }else if(aux==DISCONNECTED || aux==ERRWRT){
+                                printf("\nLocal Server is disconnecting. Do you want to try to reconnect to a group?\n");
                                 printf("Retry(r) or Leave(l): ");
                                 fgets(buf, input_string_max_size, stdin);
                                 sscanf(buf,"%c\n",&selector);
@@ -95,9 +93,12 @@ int main(void)
                                     aux=-7;
                                 }
                                 break;
-                            }else if(aux==ERRMALLOC){
+                            }else if(aux==ERRMALLOC)
+                            {
                                 printf("\nServer is unable to create key-value due to lack of memory\n");
-                            }else{
+                            }
+                            else
+                            {
                                 printf("\nSomething went wrong\n");
                             }
                         }else if(selector=='2'){//Get value
@@ -108,7 +109,7 @@ int main(void)
                             if(aux==1){
                                 printf("Value of key %s\n",key);
                                 printf("Value: %s\n",value);
-                            }else if(aux==DISCONNECTED){
+                            }else if(aux==DISCONNECTED || aux==ERRWRT){
                                 printf("\nLocal Server is disconnecting. Do you want to reconnect to a group?\n");
                                 printf("Retry(r) or Leave(l): ");
                                 fgets(buf, input_string_max_size, stdin);
@@ -131,7 +132,7 @@ int main(void)
                             aux=delete_value(key);
                             if(aux==1){
                                 printf("Successfully deleted entry of key %s",key);
-                            }else if(aux==DISCONNECTED){
+                            }else if(aux==DISCONNECTED || aux==ERRWRT){
                                 printf("\nLocal Server is disconnecting. Do you want to reconnect to a group?\n");
                                 printf("Retry(r) or Leave(l): ");
                                 fgets(buf, input_string_max_size, stdin);
@@ -152,7 +153,7 @@ int main(void)
                             if(aux==1)
                             {
                                 printf("\nThread has been called\n");
-                            }else if(aux==DISCONNECTED){
+                            }else if(aux==DISCONNECTED || aux==ERRWRT){
                                 printf("\nLocal Server is disconnecting. Do you want to reconnect to a group?\n");
                                 printf("Retry(r) or Leave(l): ");
                                 fgets(buf, input_string_max_size, stdin);
@@ -177,7 +178,7 @@ int main(void)
                                 aux=6;
                             }else{
                                 aux=close_connection();
-                                if(aux==1||aux==DISCONNECTED){
+                                if(aux==1||aux==DISCONNECTED||aux==ERRWRT){
                                     printf("Connection closed\n");
                                     selector='5';
                                     aux=1;

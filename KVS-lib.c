@@ -101,7 +101,6 @@ int put_value(char * key, char * value)
     long int vallen=strlen(value);
 
     buf=PUT;
-
     if(write(client_sock,&buf,sizeof(int))==-1){
         perror("write(flag:PUT)  error");
         return ERRWRT;

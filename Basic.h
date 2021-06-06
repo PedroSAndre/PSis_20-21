@@ -31,6 +31,7 @@
 #define n_groups_max 1021
 
 //Flags defenition
+//Action Flags
 #define WAIT 0
 #define PUT 1
 #define GET 2

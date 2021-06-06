@@ -2,6 +2,13 @@
 #include "group_table_struct.h"
 #include "key_value_struct.h"
 
+//Struct to be used to store group_table pairs
+
+/*hashCode_group_table()   This function assigns an index to a certain key.
+                        
+                Arguments:  key   
+                        
+                Returns:    Index for the hash group-table table*/
 int hashCode_group_table(char* key)
 {
     int i=0;
@@ -14,7 +21,10 @@ int hashCode_group_table(char* key)
     return index;
 }
 
-
+/*hashCreateInicialize_group_table()  Returns a new inicialized table 
+                        
+                Returns:    table   - Correspond to the address of the first element of the table. Table inicialized successfully
+                            NULL    - Alocation of memory unsuccessful*/
 struct group_table * hashCreateInicialize_group_table()
 {
     struct group_table * table;
@@ -35,7 +45,13 @@ struct group_table * hashCreateInicialize_group_table()
     return table;
 }
 
-
+/*hashInsert_group_table()   This function creates/updates an entry in the hash table for a pair group-table
+                        
+                Arguments:  group       - Value to be inserted
+                            table       - Correspond to the address of the first element of the table
+                        
+                Returns:    SUCCESS     - Created group
+                            ERRMALLOC   - Error alocating memory*/
 int hashInsert_group_table(struct group_table * table, char * group)
 {
     int aux;
@@ -77,7 +93,13 @@ int hashInsert_group_table(struct group_table * table, char * group)
     return SUCCESS;
 }
 
-
+/*hashGet_group_table()   This function looks for the table of a certain group
+                        
+                Arguments:  group   - group to search for table
+                            table   - Correspond to the address of the first element of the table
+                        
+                Returns:    key_value_table - Found the address of the key-value table
+                            NULL            - Group not found*/
 struct key_value * hashGet_group_table(struct group_table * table, char * group)
 {
     int aux;
@@ -105,6 +127,13 @@ struct key_value * hashGet_group_table(struct group_table * table, char * group)
     }
 }
 
+/*hashDelete_group_table()   This function deletes an entry of the hash group-table table
+                        
+                Arguments:  group       - group to delete
+                            table       - Correspond to the address of the first element of the table for the considered group
+                        
+                Returns:    SUCCESS     - Deleted group
+                            DENIED      - group not found*/
 int hashDelete_group_table(struct group_table * table, char * group)
 {
     int aux;
@@ -162,6 +191,9 @@ int hashDelete_group_table(struct group_table * table, char * group)
     return SUCCESS;
 }
 
+/*hashFree_group_table()   This function will dealocate the memory assigned to this group-table table
+                        
+                           Arguments:  table - Correspond to the address of the first element of the table for the considered group*/
 void hashFree_group_table(struct group_table * table)
 {
     struct group_table * aux;
@@ -187,4 +219,3 @@ void hashFree_group_table(struct group_table * table)
     free(table);
     return;
 }
-

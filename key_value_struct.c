@@ -114,7 +114,7 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
     return SUCCESS;
 }
 
-/*getGroupSecret()   This function looks for the value of a certain key
+/*hashGet_key_value()   This function looks for the value of a certain key
                         
                 Arguments:  key     - Key to search for value
                             table   - Correspond to the address of the first element of the table for the considered group
@@ -155,7 +155,7 @@ char * hashGet_key_value(struct key_value * table, char * key)
     return aux3;
 }
 
-/*deleteEntry()   This function deletes an entry of the hash key-value table
+/*hashDelete_key_value()   This function deletes an entry of the hash key-value table
                         
                 Arguments:  key         - Key to delete
                             table       - Correspond to the address of the first element of the table for the considered group

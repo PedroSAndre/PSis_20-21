@@ -19,20 +19,22 @@ struct app_status * inicialize_app_status(void)
 }
 
 //Returns 0 in sucess, -1 in failure
-int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group, char * deleting_group)
+int add_status(struct app_status ** dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group, char * deleting_group)
 {
+    struct app_status *aux;
     if(strcmp(deleting_group,group)==0) {
         return DENIED;
     } 
-    dummy = realloc(dummy,*(clients_connected+2)*sizeof(struct app_status));
-    if(dummy == NULL)
+    aux = realloc(*dummy,(*(clients_connected)+2)*sizeof(struct app_status));
+    if(aux == NULL)
         return ERRMALLOC;
     *clients_connected = *clients_connected+1;
-    dummy[*clients_connected].client_ptid = client_ptid;
-    dummy[*clients_connected].process_ptid = process_ptid;
-    dummy[*clients_connected].connection_time = time(NULL);
-    dummy[*clients_connected].close_time = -1;
-    strcpy(dummy[*clients_connected].group,group);
+    aux[*clients_connected].client_ptid = client_ptid;
+    aux[*clients_connected].process_ptid = process_ptid;
+    aux[*clients_connected].connection_time = time(NULL);
+    aux[*clients_connected].close_time = -1;
+    strcpy(aux[*clients_connected].group,group);
+    *dummy=aux;
     return SUCCESS;
 }
 

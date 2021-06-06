@@ -286,7 +286,7 @@ void handleConnection(void *arg)
     if(answer==SUCCESS)
     {
         pthread_mutex_lock(&acess_group);
-        if(add_status(state, local_PID, client_PID, &all_clients_connected,group_id,deleting_group) <SUCCESS)
+        if(add_status(&state, local_PID, client_PID, &all_clients_connected,group_id,deleting_group) <SUCCESS)
         {
             printf("Error updating status\nNot allowing new connection\n\n");
             cycle=0;

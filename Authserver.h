@@ -1,9 +1,7 @@
 #ifndef _Authserver_
 #define _Authserver_
 
-
-
-#define SIZE 101
+#define SIZE 1021
 #define nASCII 95
 
 
@@ -32,8 +30,7 @@ int hashIndex(char * group);
 //Creates an entry in hash function
 int createUpdateEntry(char * group,char *secret);
 
-//Deletes an entry in hash function. It requires the secret to make sure that the 
-//entry can be deleted by the one requesting the delete
+//Deletes an entry in hash function.
 int deleteEntry(char * group);
 
 //Request the group secret

@@ -292,7 +292,7 @@ struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     return Main;
 }
 
-/*generate_secret()   Generates a random sting for the secret with key_max_size
+/*generate_secret()   Generates a random stRing for the secret with key_max_size
                         
                 Arguments:  secret  - This will be overwritten*/
 void generate_secret(char * secret){
@@ -333,8 +333,8 @@ void delete_All_Entries(){
 
                 Arguments:  socket_af_stream    - socket from which we will receive
                             to_read             - Buffer to keep the input
-                            size_to_read        - Usually (group_id_max_size+2)*sizeof(char), +2 para "%d:" do request, 1 dígito sempre
-                            server_sock_addr    - address wher we will keep where the message came from (IP + port)
+                            size_to_read        - Usually (group_id_max_size+2)*sizeof(char), +2 to "%d:" of request, always one digit
+                            server_sock_addr    - address where we will keep where the message came from (IP + port)
                             len                 - length of previous struct
                         
                 Returns:    SUCCESS     - Received message from local server

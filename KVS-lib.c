@@ -11,14 +11,14 @@ int client_sock;
                 Arguments:      group_id    - string that contains the group_id of the table we want to acess in KVS-LocalServer
                                 secret      - string that contains the secret corresponding to the group, for authentication
                         
-                Returns:    0                   - Connection sucessful
-                            ERRSCKCREATION      - Error creating socket
-                            ERRCONNECTING       - Error connecting to local server
-                            DISCONNECTED        - Server disconnected
-                            ERRWRT              - Failed to write in socket
-                            ERRRD               - Group not found
-                            DENIED              - Incorrect group or secret
-                            ERRTIMEOUT          - Auth-Server timed-out*/
+                Returns:        0                   - Connection sucessful
+                                ERRSCKCREATION      - Error creating socket
+                                ERRCONNECTING       - Error connecting to local server
+                                DISCONNECTED        - Server disconnected
+                                ERRWRT              - Failed to write in socket (server disconnected - broken pipe)
+                                ERRRD               - Group not found
+                                DENIED              - Incorrect group or secret
+                                ERRTIMEOUT          - Auth-Server timed-out*/
 int establish_connection (char * group_id, char * secret)
 {
     
@@ -49,7 +49,7 @@ int establish_connection (char * group_id, char * secret)
         perror("Error connecting client socket");
         return DISCONNECTED;
     }
-    signal(SIGPIPE, SIG_IGN);//Accept write errors
+    signal(SIGPIPE, SIG_IGN); //Accept write errors
     
 
 
@@ -81,19 +81,19 @@ int establish_connection (char * group_id, char * secret)
         return answer;
     }
 
-    return 0;
+    return SUCCESS;
 }
 
 
 /*put_value()   This function tries to assign the provided value to the provided key. If the provided key-pairdoes not exist in the server, it is created.
-                If the key-value pair already exists in the server itis updated with the provided value.
+                If the key-value pair already exists in the server it is updated with the provided value.
                         
                 Arguments:      key     - string that contains the key of the pair key-value we want to add
                                 value   - string that contains the value of the pair key-value we want to add
                         
                 Returns:    1                   - Created the key-value pair sucessfully
                             DISCONNECTED        - Server disconnected
-                            ERRWRT              - Failed to write in socket
+                            ERRWRT              - Failed to write in socket (server disconnected - broken pipe)
                             ERRRD               - key not found
                             ERRMALLOC           - Server was unable to alocate memory for the new key-value pairt*/
 int put_value(char * key, char * value)
@@ -141,11 +141,11 @@ int put_value(char * key, char * value)
                 Arguments:      key     - string that contains the key of the pair key-value we want to find the value of
                                 value   - address to the string that the value will be placed in
                         
-                Returns:    1                   - Sucessfully recovered value
-                            DISCONNECTED        - Server disconnected
-                            ERRWRT              - Failed to write in socket
-                            ERRRD               - key not found
-                            ERRMALLOC           - Server was unable to alocate memory for the value*/
+                Returns:        1                   - Sucessfully recovered value
+                                DISCONNECTED        - Server disconnected
+                                ERRWRT              - Failed to write in socket (server disconnected - broken pipe)
+                                ERRRD               - key not found
+                                ERRMALLOC           - Server was unable to alocate memory for the value*/
 int get_value(char * key, char ** value)
 {
     long int answer;
@@ -194,10 +194,10 @@ int get_value(char * key, char ** value)
                         
                 Arguments:      key     - string that contains the key of the pair key-value we want to delete
                         
-                Returns:    1                   - Sucessfully recovered value
-                            DISCONNECTED        - Server disconnected
-                            ERRWRT              - Failed to write in socket
-                            ERRRD               - key not found*/
+                Returns:        1                   - Sucessfully recovered value
+                                DISCONNECTED        - Server disconnected
+                                ERRWRT              - Failed to write in socket (server disconnected - broken pipe)
+                                ERRRD               - key not found*/
 int delete_value(char * key)
 {
     int buf;
@@ -233,11 +233,11 @@ int delete_value(char * key)
                 Arguments:      key                 - string that contains the key of the pair key-value we want to monitor
                                 callback_function   - funtion to be called as a thread after a change in key
                         
-                Returns:    1                   - Sucessfully recovered value
-                            DISCONNECTED        - Server disconnected
-                            ERRWRT              - Failed to write in socket
-                            ERRRD               - key not found
-                            ERRPTHR             - Eror creating the thread*/
+                Returns:        1                   - Sucessfully recovered value
+                                DISCONNECTED        - Server disconnected
+                                ERRWRT              - Failed to write in socket (server disconnected - broken pipe)
+                                ERRRD               - key not found
+                                ERRPTHR             - Eror creating the thread*/
 int register_callback(char * key, void (*callback_function)(char *)){
     int answer;
     pthread_t thread_id;
@@ -275,7 +275,6 @@ int register_callback(char * key, void (*callback_function)(char *)){
                 Arguments:      
                         
                 Returns:    1                   - Sucessfully recovered value
-                            DISCONNECTED        - Server disconnected
                             ERRWRT              - Failed to write in socket
                             ERRCLS              - Error closing connection*/
 int close_connection()

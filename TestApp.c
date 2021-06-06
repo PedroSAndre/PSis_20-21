@@ -1,6 +1,7 @@
 #include "Basic.h"
 #include "KVS-lib.h"
 
+//This is a very basic app to test the KVS-Lib.c Asks the user for inputs and does whaat it needs accordingly
 
 void f(char * key){
     printf("The key with name %s was changed\n", key);
@@ -38,7 +39,7 @@ int main(void)
 
                 
                 aux=establish_connection(group,secret);
-                if(aux!=0 && aux!=DENIED)
+                if(aux!=0 && aux!=DENIED && aux!=ERRRD)
                 {
                     printf("\nUnable to connect.\nPlease, try again or leave the program\n");
                     printf("Retry(r) or Leave(l): ");
@@ -64,9 +65,17 @@ int main(void)
                     {
                         break;
                     }
-                }
-                else 
-                {
+                }else if(aux==ERRRD){
+                    printf("\nGroup not found.\nPlease, try again or leave the program\n");
+                    printf("Retry(r) or Leave(l): ");
+                    fgets(buf, input_string_max_size, stdin);
+                    sscanf(buf,"%c\n",&selector);
+                    if(selector=='r'){
+                        aux=-7;
+                    }else{
+                        break;
+                    }
+                }else{
                     printf("\nSucessfully established conection with group %s\n\n",group);
                     while(selector !='5'){
                         printf("Choose what action do you want to take:\n1 - Put value\n2 - Get value\n3 - Delete value\n4 - Register Callback\n5 - Close connection\n");
@@ -178,7 +187,7 @@ int main(void)
                                 aux=6;
                             }else{
                                 aux=close_connection();
-                                if(aux==1||aux==DISCONNECTED||aux==ERRWRT){
+                                if(aux==1||aux==ERRWRT){
                                     printf("Connection closed\n");
                                     selector='5';
                                     aux=1;

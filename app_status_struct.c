@@ -2,7 +2,10 @@
 #include "app_status_struct.h"
 
 
-//struct app_status functions
+/*inicialize_app_status()  Returns a new inicialized dynamic vector
+                        
+                Returns:    dummy   - Correspond to the address of the first element of the vector.
+                            NULL    - Alocation of memory unsuccessful*/
 struct app_status * inicialize_app_status(void)
 {
     //Creates an instance with the information from main
@@ -18,25 +21,43 @@ struct app_status * inicialize_app_status(void)
     return dummy;
 }
 
-//Returns 0 in sucess, -1 in failure
-int add_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group, char * deleting_group)
+/*add_status()   This function adds an entry in the dynamic vector for the new client that connected
+                        
+                Arguments:  process_ptid, client_ptid, group    - Values to be inserted
+                            clients_connected                   - Number of clients connected
+                            deleting_group                      - To check if the group is being deleted
+                            dummy                               - Corresponds to the address of the first element of the dynamic vector
+                        
+                Returns:    SUCCESS     - Added client
+                            ERRMALLOC   - Error alocating memory
+                            DENIED      - Cannot connect client because the group will be deleted*/
+int add_status(struct app_status ** dummy, pthread_t process_ptid, int client_ptid, int * clients_connected, char * group, char * deleting_group)
 {
+    struct app_status *aux;
     if(strcmp(deleting_group,group)==0) {
         return DENIED;
     } 
-    dummy = realloc(dummy,*(clients_connected+2)*sizeof(struct app_status));
-    if(dummy == NULL)
+    aux = realloc(*dummy,(*(clients_connected)+2)*sizeof(struct app_status));
+    if(aux == NULL)
         return ERRMALLOC;
     *clients_connected = *clients_connected+1;
-    dummy[*clients_connected].client_ptid = client_ptid;
-    dummy[*clients_connected].process_ptid = process_ptid;
-    dummy[*clients_connected].connection_time = time(NULL);
-    dummy[*clients_connected].close_time = -1;
-    strcpy(dummy[*clients_connected].group,group);
+    aux[*clients_connected].client_ptid = client_ptid;
+    aux[*clients_connected].process_ptid = process_ptid;
+    aux[*clients_connected].connection_time = time(NULL);
+    aux[*clients_connected].close_time = -1;
+    strcpy(aux[*clients_connected].group,group);
+    *dummy=aux;
     return SUCCESS;
 }
 
-//Returns 0 in sucess, -1 in failure
+/*close_status()   This function closes a connection on the dynamic vector
+                        
+                Arguments:  process_ptid, client_ptid       - Information of the client to close
+                            clients_connected               - Number of clients connected
+                            dummy                           - Correspond to the address of the first element of the dynamic vector
+                        
+                Returns:    SUCCESS     - Closed connection
+                            ERRRD       - Connection not found*/
 int close_status(struct app_status * dummy, pthread_t process_ptid, int client_ptid, int clients_connected)
 {
     for(int i = 1;i<=clients_connected;i++)
@@ -50,6 +71,10 @@ int close_status(struct app_status * dummy, pthread_t process_ptid, int client_p
     return ERRRD;
 }
 
+/*print_status()   This function prints the information about all connections (past and present)
+                        
+                Arguments:  clients_connected               - Number of clients connected
+                            dummy                           - Correspond to the address of the first element of the dynamic vector*/
 void print_status(struct app_status * dummy, int clients_connected)
 {
     struct tm* tm_info;
@@ -71,6 +96,11 @@ void print_status(struct app_status * dummy, int clients_connected)
     return;
 }
 
+/*wait_to_group_clients_to_disconect()   Waits for the connections of a certain group to disconnect
+                        
+                Arguments:  clients_connected               - Number of clients connected
+                            dummy                           - Correspond to the address of the first element of the dynamic vector
+                            group                           - Group to wait for*/
 void wait_to_group_clients_to_disconect(struct app_status * dummy, int clients_connected, char * group)
 {
     int aux=1;

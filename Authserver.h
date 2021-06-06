@@ -1,9 +1,7 @@
 #ifndef _Authserver_
 #define _Authserver_
 
-
-
-#define SIZE 101
+#define SIZE 1021
 #define nASCII 95
 
 
@@ -27,14 +25,13 @@ struct HashGroup {
 struct HashGroup * Table[SIZE];
 
 //Hash function for group hash table
-int HashIndex(char * group);
+int hashIndex(char * group);
 
 //Creates an entry in hash function
-int CreateUpdateEntry(char * group,char *secret);
+int createUpdateEntry(char * group,char *secret);
 
-//Deletes an entry in hash function. It requires the secret to make sure that the 
-//entry can be deleted by the one requesting the delete
-int DeleteEntry(char * group);
+//Deletes an entry in hash function.
+int deleteEntry(char * group);
 
 //Request the group secret
 char * getGroupSecret(char * group);
@@ -48,12 +45,16 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 //If the message has already been analysed, it can be deleted
 struct Message * deleteMessage(struct Message * Current, struct Message * Main);
 
+//Generates a random sting for the secret with key_max_size
 void generate_secret(char * secret);
 
+//When shutting down server, it is necessary to deallocate the memory for the list of messages
 void delete_All_messages(struct Message * Main);
 
+//When shutting down server, it is necessary to deallocate the memory for the hash table
 void delete_All_Entries();
 
+//Funtion to deal with timeout of the recv
 int recvfrom_timeout(int * socket_af_stream, void * to_read, int size_to_read,struct sockaddr * server_sock_addr, socklen_t * len);
 
 #endif

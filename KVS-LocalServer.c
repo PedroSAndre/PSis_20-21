@@ -90,7 +90,10 @@ int main(int argc, char ** argv)
         else if(selector==1)
         {
             printf("Insert the new group ID: ");
-            fgets(input_string, group_id_max_size, stdin);
+            do
+            {
+                fgets(input_string, group_id_max_size, stdin); //asks until string is not empty
+            } while(strlen(input_string)==1);
             input_string[strlen(input_string)-1]='\0'; //deleting \n
             aux = AuthServerCom(PUT,input_string,secret,Authserver_sock,Authserver_sock_addr);
             if(aux == ERRRD)
@@ -115,7 +118,10 @@ int main(int argc, char ** argv)
         else if(selector==2)
         {
             printf("Delete the group with ID: ");
-            fgets(input_string, group_id_max_size, stdin);
+            do
+            {
+                fgets(input_string, group_id_max_size, stdin); //asks until string is not empty
+            } while(strlen(input_string)==1);
             input_string[strlen(input_string)-1]='\0';
             aux=AuthServerCom(DEL,input_string,secret,Authserver_sock,Authserver_sock_addr);
             if(aux == ERRRD)
@@ -153,7 +159,10 @@ int main(int argc, char ** argv)
         else if(selector == 3)
         {
             printf("Get info of group ID: ");
-            fgets(input_string, group_id_max_size, stdin);
+            do
+            {
+                fgets(input_string, group_id_max_size, stdin); //asks until string is not empty
+            } while(strlen(input_string)==1);
             input_string[strlen(input_string)-1]='\0';
             aux=AuthServerCom(GET,input_string,secret,Authserver_sock,Authserver_sock_addr);
             if(aux == ERRRD)

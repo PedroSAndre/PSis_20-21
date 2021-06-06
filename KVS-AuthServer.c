@@ -13,7 +13,7 @@ int server_status=1;
                     Takes the port as an argument. This is the port the sockets will connect to.*/
 int main(int argc, char**argv)
 {
-    int err;
+    int err=0;
     int answer;
     int kvs_authserver_sock;
     int kvs_localserver_sock;
@@ -100,7 +100,7 @@ int main(int argc, char**argv)
             //Creates group - returns the secret or NULL. IF unable to alocate memory shutsdown server
             }else if (Current->request==PUT){
                 generate_secret(newsecret);
-                if(CreateUpdateEntry(Current->group,newsecret)==SUCCESS){
+                if(createUpdateEntry(Current->group,newsecret)==SUCCESS){
                     sendto(kvs_authserver_sock,newsecret,secret_max_size*sizeof(char),0,(struct sockaddr * )&kvs_localserver_sock_addr,sizeof(struct sockaddr_in));
                     printf("Secret:%s\n",newsecret);
 
@@ -121,7 +121,7 @@ int main(int argc, char**argv)
                 answer=SKIPWRTANSWER;
             //Delete entry for group - returns SUCCESS if successful
             }else if(Current->request==DEL){
-                answer=DeleteEntry(Current->group);
+                answer=deleteEntry(Current->group);
                 free(Current);
             //Makes authentication - returns SUCCESS if successful
             }else if(Current->request==CMP){

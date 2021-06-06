@@ -27,14 +27,14 @@ struct HashGroup {
 struct HashGroup * Table[SIZE];
 
 //Hash function for group hash table
-int HashIndex(char * group);
+int hashIndex(char * group);
 
 //Creates an entry in hash function
-int CreateUpdateEntry(char * group,char *secret);
+int createUpdateEntry(char * group,char *secret);
 
 //Deletes an entry in hash function. It requires the secret to make sure that the 
 //entry can be deleted by the one requesting the delete
-int DeleteEntry(char * group);
+int deleteEntry(char * group);
 
 //Request the group secret
 char * getGroupSecret(char * group);

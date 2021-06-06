@@ -2,12 +2,12 @@
 #include "Authserver.h"
 
 
-/*HashIndex()   This function assigns an index to a certain group.
+/*hashIndex()   This function assigns an index to a certain group.
                         
                 Arguments:  group   
                         
                 Returns:    Index for the hash table*/
-int HashIndex(char * group){
+int hashIndex(char * group){
     int i=0;
     int Index=0;
     while(group[i]!='\0' && group[i]!='\n' && i<group_id_max_size){
@@ -17,8 +17,14 @@ int HashIndex(char * group){
     return Index;
 }
 
-int CreateUpdateEntry(char * group,char *secret){
-    int TableIndex=HashIndex(group);
+/*createUpdateEntry()   This function creates an entry in the hash table for a pair group-secret
+                        
+                Arguments:  group, secret
+                        
+                Returns:    SUCCESS     - Created group
+                            ERRMALLOC   - Error alocating memory*/
+int createUpdateEntry(char * group,char *secret){
+    int TableIndex=hashIndex(group);
     struct HashGroup * Current,* Previous;
     
     struct HashGroup * Novo;
@@ -62,8 +68,14 @@ int CreateUpdateEntry(char * group,char *secret){
 
 }
 
-int DeleteEntry(char * group){
-    int TableIndex=HashIndex(group);
+/*deleteEntry()   This function deletes an entry of the hash table
+                        
+                Arguments:  group
+                        
+                Returns:    SUCCESS     - Deleted group
+                            DENIED      - Group not found*/
+int deleteEntry(char * group){
+    int TableIndex=hashIndex(group);
     struct HashGroup * Current,* Previous;
     
     Current=Table[TableIndex];
@@ -94,8 +106,15 @@ int DeleteEntry(char * group){
     return DENIED;
 }
 
+
+/*getGroupSecret()   This function looks for the secret of a certain group
+                        
+                Arguments:  group
+                        
+                Returns:    secret      - Found the secret of the group
+                            "\0"        - Group not found*/
 char * getGroupSecret(char * group){
-    int TableIndex=HashIndex(group);
+    int TableIndex=hashIndex(group);
     int result=0;
     struct HashGroup * Current,* Previous;
     char * noentry="\0";
@@ -117,6 +136,13 @@ char * getGroupSecret(char * group){
     return noentry;
 }
 
+/*compareHashGroup()   This function compares a group-secret pair with the one stored in the hash table
+                        
+                Arguments:  group, secret
+                        
+                Returns:    SUCCESS     - Goup-secret pair match
+                            DENIED      - Goup-secret pair do not match
+                            ERRRD       - Group not found*/
 int compareHashGroup(char * group, char * checksecret){
     char * secret;
 
@@ -133,6 +159,17 @@ int compareHashGroup(char * group, char * checksecret){
     
 }
 
+
+/*recoverClientMessage()    This function function deals with the incoming message from the Local Servers. It just checks if this is the first message of the request for
+                            this local server to then check the format of the message. 
+                        
+                Arguments:  buf                         - input from the local server
+                            kvs_localserver_sock_addr   - address of the local server
+                            Main                        - List of Previous messages (for authentication waiting for secret)
+                            err                         - address to a error flag
+                        
+                Returns:    Current     - struct with organized message
+                            NULL        - not successful, places a value in error flag*/
 struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localserver_sock_addr,struct Message ** Main, int * err){
     int request=0,aux;
     char * group;
@@ -155,6 +192,7 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
         aux=sscanf(buf,"%d:%s",&request,group);
         if(aux!=2){
             free(group);
+            *err=WRNGARG;
             printf("request or group not translated\n");
             return NULL;
         }
@@ -222,9 +260,19 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
             strcpy(Current->secret,buf);
         }
     }
+    *err=SUCCESS;
     return Current;
 }
 
+
+
+/*deleteMessage()   This function deals with deleting messages from the list of messages, in case of authentication complete
+                        
+                Arguments:  Current                     - input from the local server
+                            Main                        - List of Previous messages (for authentication waiting for secret)
+                        
+                Returns:    Main        - list of messages
+                            NULL        - list becomes empty*/
 struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     struct Message * Previous;
     if(Current==Main){
@@ -256,6 +304,10 @@ void generate_secret(char * secret){
 
 }
 
+
+/*delete_All_messages()   When shutting down server, it is necessary to deallocate the memory for the list of messages
+                        
+                Arguments:  Main    - List of Previous messages (for authentication waiting for secret)*/
 void delete_All_messages(struct Message * Main){
     struct Message * Current;
     while(Main!=NULL){
@@ -263,16 +315,27 @@ void delete_All_messages(struct Message * Main){
     }
 }
 
+/*delete_All_Entries()   When shutting down server, it is necessary to deallocate the memory for the hash table*/
 void delete_All_Entries(){
     struct HashGroup * Current;
     for(int i=0;i<SIZE;i++){
         while(Table[i]!=NULL){
             Current=Table[i];
-            DeleteEntry(Current->group);
+            deleteEntry(Current->group);
         }
     }
 }
 
+/*recvfrom_timeout()   Funtion to deal with timeout of the recv
+
+                Arguments:  socket_af_stream    - socket from which we will receive
+                            to_read             - Buffer to keep the input
+                            size_to_read        - Usually (group_id_max_size+2)*sizeof(char), +2 para "%d:" do request, 1 dígito sempre
+                            server_sock_addr    - address wher we will keep where the message came from (IP + port)
+                            len                 - length of previous struct
+                        
+                Returns:    SUCCESS     - Received message from local server
+                            ERRTIMEOUT  - Didn't receive any messages until timeout*/
 int recvfrom_timeout(int * socket_af_stream, void * to_read, int size_to_read,struct sockaddr * server_sock_addr, socklen_t * len)
 {
     struct timeval tmout;

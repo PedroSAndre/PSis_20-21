@@ -283,6 +283,12 @@ void handleConnection(void *arg)
 
     answer=AuthServerCom(CMP,group_id,secret,Authserver_sock,Authserver_sock_addr);
 
+    local_key_value_table = hashGet_group_table(groups, group_id);
+    if(local_key_value_table == NULL)
+    {
+        answer = ERRRD;
+    }
+
     if(answer==SUCCESS)
     {
         pthread_mutex_lock(&acess_group);
@@ -293,12 +299,7 @@ void handleConnection(void *arg)
             answer = DENIED;
         }
         pthread_mutex_unlock(&acess_group);
-        local_key_value_table = hashGet_group_table(groups, group_id);
-        if(local_key_value_table == NULL)
-        {
-            cycle=0;
-            answer = ERRRD;
-        }
+
         write(client_sock,&answer,sizeof(answer));
         
         //Connection cycle

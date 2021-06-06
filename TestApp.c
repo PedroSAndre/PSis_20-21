@@ -187,7 +187,7 @@ int main(void)
                                 aux=6;
                             }else{
                                 aux=close_connection();
-                                if(aux==1||aux==DISCONNECTED||aux==ERRWRT){
+                                if(aux==1||aux==ERRWRT){
                                     printf("Connection closed\n");
                                     selector='5';
                                     aux=1;

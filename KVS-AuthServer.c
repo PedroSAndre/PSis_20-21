@@ -3,6 +3,7 @@
 
 #define SKIPWRTANSWER 2
 
+//Thread functions
 void quit_auth(void *arg);
 
 int server_status=1;
@@ -10,7 +11,7 @@ int server_status=1;
 /*KVS-AuthServer    This program will be reponsible for receiving requests from the local server, such as, to create, delete, get the secret of groups and even 
                     authenticate group-secret pairs.
 
-                    Takes the port as an argument. This is the port the sockets will connect to.*/
+                    Arguments: argv[1]      - Takes the port as an argument. This is the port the sockets will connect to.*/
 int main(int argc, char**argv)
 {
     int err=0;
@@ -159,8 +160,8 @@ int main(int argc, char**argv)
 }
 
 
-
-/*quit_auth     This thread will be called in the beginning and will make a control section for the user. In other words, by clicking any button changes 
+//Thread functions
+/*quit_auth     This thread will be called in the beginning and will make a control section for the user. In other words, by clicking enter changes 
                 the value of server_status which will begin a shutdown order of the server*/
 void quit_auth(void *arg)
 {

@@ -69,20 +69,21 @@ int main(int argc, char**argv)
     printf("IP address is: %s\n", inet_ntoa(kvs_authserver_sock_addr.sin_addr));
     printf("Port is: %d\n", (int) ntohs(kvs_authserver_sock_addr.sin_port));
 
-    //Waiting for connection cycle
     kvs_localserver_sock=0;
     memset(&kvs_localserver_sock_addr,0,sizeof(struct sockaddr_in));
 
 
+    //Connection cycle
     while(server_status){
         if(recvfrom_timeout(&kvs_authserver_sock,buf,(group_id_max_size+2)*sizeof(char),(struct sockaddr *)&kvs_localserver_sock_addr,&len)==ERRTIMEOUT)
         {
+            //Timed out. Usefull when an order for shutdown has been registered
             continue;
         }
         printf("Received: %s\n",buf);
         answer=0;
         
-
+        //If it is CMP we need to assign to a list so next time this local connects, we make sure to place the secret on the right place
         Current=recoverClientMessage(buf,kvs_localserver_sock_addr,&Main,&err);
 
         if(Current==NULL){
@@ -96,6 +97,7 @@ int main(int argc, char**argv)
                 Current->request=WAIT;
                 free(Current);
                 answer=DENIED;
+            //Creates group - returns the secret or NULL. IF unable to alocate memory shutsdown server
             }else if (Current->request==PUT){
                 generate_secret(newsecret);
                 if(CreateUpdateEntry(Current->group,newsecret)==SUCCESS){
@@ -108,7 +110,7 @@ int main(int argc, char**argv)
                     free(Current);
                     break;
                 }
-            //Get secret
+            //Get secret - returns secret if sucessful
             }else if(Current->request==GET){
                 secret=getGroupSecret(Current->group);
                 
@@ -117,10 +119,11 @@ int main(int argc, char**argv)
 
                 free(Current);
                 answer=SKIPWRTANSWER;
-            //Delete entry for group
+            //Delete entry for group - returns SUCCESS if successful
             }else if(Current->request==DEL){
                 answer=DeleteEntry(Current->group);
                 free(Current);
+            //Makes authentication - returns SUCCESS if successful
             }else if(Current->request==CMP){
                 if(strcmp(Current->secret,"\0")!=0){
                     answer=compareHashGroup(Current->group,Current->secret);
@@ -128,6 +131,7 @@ int main(int argc, char**argv)
                 }else{
                     answer=SUCCESS;
                 }
+            //Format wrong
             }else if(answer==0){
                 answer=DENIED;
             }
@@ -154,6 +158,10 @@ int main(int argc, char**argv)
     return SUCCESS;
 }
 
+
+
+/*quit_auth     This thread will be called in the beginning and will make a control section for the user. In other words, by clicking any button changes 
+                the value of server_status which will begin a shutdown order of the server*/
 void quit_auth(void *arg)
 {
     printf("*****Welcome to KVS-Auth-Server*****\nTo exit you just need to press enter\n");

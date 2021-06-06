@@ -34,7 +34,9 @@ int hashDelete_key_value(struct key_value * table, char * key);
 //Frees the memory on the end of execution (returns 0 in sucess, -1 if failed to find)
 void hashFree_key_value(struct key_value * table);
 
+//This function will wait for a condition variable associated to the key value is signaled, when key is changed
 int hashWaitChange_key_value(struct key_value * table, char * key);
 
+//When deleting a table (deleting a group), it was necessary to signal all callbacks for them to not get stuck while the server is waiting
 void signal_all_callback(struct key_value * table);
 #endif

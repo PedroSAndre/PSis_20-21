@@ -303,7 +303,7 @@ int hashWaitChange_key_value(struct key_value * table, char * key)
     return SUCCESS;
 }
 
-/*deleteEntry()   When deleting a table (deleting a group), it was necessary to signal all callbacks for them to not get stuck while the server is waiting
+/*signal_all_callback()   When deleting a table (deleting a group), it was necessary to signal all callbacks for them to not get stuck while the server is waiting
                         
                 Arguments:  table       - Correspond to the address of the first element of the table for the considered group*/
 void signal_all_callback(struct key_value * table){

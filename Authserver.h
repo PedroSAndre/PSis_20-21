@@ -48,12 +48,16 @@ struct Message * recoverClientMessage(char * buf,struct sockaddr_in kvs_localser
 //If the message has already been analysed, it can be deleted
 struct Message * deleteMessage(struct Message * Current, struct Message * Main);
 
+//Generates a random sting for the secret with key_max_size
 void generate_secret(char * secret);
 
+//When shutting down server, it is necessary to deallocate the memory for the list of messages
 void delete_All_messages(struct Message * Main);
 
+//When shutting down server, it is necessary to deallocate the memory for the hash table
 void delete_All_Entries();
 
+//Funtion to deal with timeout of the recv
 int recvfrom_timeout(int * socket_af_stream, void * to_read, int size_to_read,struct sockaddr * server_sock_addr, socklen_t * len);
 
 #endif

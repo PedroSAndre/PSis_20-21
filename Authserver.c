@@ -292,6 +292,9 @@ struct Message * deleteMessage(struct Message * Current, struct Message * Main){
     return Main;
 }
 
+/*generate_secret()   Generates a random sting for the secret with key_max_size
+                        
+                Arguments:  secret  - This will be overwritten*/
 void generate_secret(char * secret){
 
 

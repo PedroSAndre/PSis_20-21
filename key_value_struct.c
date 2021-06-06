@@ -1,8 +1,14 @@
 #include "Basic.h"
 #include "key_value_struct.h"
 
+//Este ficheiro irá guardar as funções relacionadas com hash table para o par key-value
 
 
+/*hashCode_key_value()   This function assigns an index to a certain key.
+                        
+                Arguments:  key   
+                        
+                Returns:    Index for the hash key_value table*/
 int hashCode_key_value(char* key)
 {
     int i=0;
@@ -15,6 +21,10 @@ int hashCode_key_value(char* key)
     return index;
 }
 
+/*hashCode_key_value()   This function assigns an index to a certain key. 
+                        
+                Returns:    table   - Correspond to the address of the first element of the table for the considered group. Table inicialized successfully
+                            NULL    - Alocation of mamory unsuccessful*/
 struct key_value * hashCreateInicialize_key_value()
 {
     struct key_value * table;
@@ -35,6 +45,13 @@ struct key_value * hashCreateInicialize_key_value()
     return table;
 }
 
+/*hashInsert_key_value()   This function creates/updates an entry in the hash table for a pair key-value
+                        
+                Arguments:  key, value
+                            table           - Correspond to the address of the first element of the table for the considered group
+                        
+                Returns:    SUCCESS     - Created group
+                            ERRMALLOC   - Error alocating memory*/
 int hashInsert_key_value(struct key_value * table, char * key, char * value)
 {
     int aux;
@@ -98,6 +115,13 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
     return SUCCESS;
 }
 
+/*getGroupSecret()   This function looks for the value of a certain key
+                        
+                Arguments:  group
+                            table   - Correspond to the address of the first element of the table for the considered group
+                        
+                Returns:    aux3        - Found the value of the group
+                            NULL        - Group not found*/
 char * hashGet_key_value(struct key_value * table, char * key)
 {
     int aux;
@@ -132,6 +156,12 @@ char * hashGet_key_value(struct key_value * table, char * key)
     return aux3;
 }
 
+/*deleteEntry()   This function deletes an entry of the hash key- value table
+                        
+                Arguments:  group
+                        
+                Returns:    SUCCESS     - Deleted group
+                            DENIED      - key not found*/
 int hashDelete_key_value(struct key_value * table, char * key)
 {
     int aux;
@@ -201,6 +231,10 @@ int hashDelete_key_value(struct key_value * table, char * key)
     return SUCCESS;
 }
 
+
+/*hashFree_key_value()   This function will dealocate the memory assigned to this key_value table
+                        
+                Arguments:  table   - Correspond to the address of the first element of the table for the considered group*/
 void hashFree_key_value(struct key_value * table)
 {
     struct key_value * aux;
@@ -224,7 +258,13 @@ void hashFree_key_value(struct key_value * table)
 }
 
 
-
+/*hashWaitChange_key_value()   This function will wait for a condition variable associated to the key value is signaled, when key is changed
+                        
+                Arguments:  key
+                            table       - Correspond to the address of the first element of the table for the considered group
+                        
+                Returns:    SUCCESS     - Waited for signal
+                            ERRRD       - key not found*/
 int hashWaitChange_key_value(struct key_value * table, char * key)
 {
     int aux;
@@ -263,6 +303,9 @@ int hashWaitChange_key_value(struct key_value * table, char * key)
     return SUCCESS;
 }
 
+/*deleteEntry()   When deleting a table (deleting a group), it was necessary to signal all callbacks for them to not get stuck while the server is waiting
+                        
+                Arguments:  table       - Correspond to the address of the first element of the table for the considered group*/
 void signal_all_callback(struct key_value * table){
     struct key_value * aux;
     if(table==NULL){
@@ -279,7 +322,7 @@ void signal_all_callback(struct key_value * table){
             {
                 aux = aux->next;
                 if(aux->signal==1){
-                    pthread_cond_signal(&(table[i].cond));
+                    pthread_cond_signal(&(aux->cond));
                 }
             }
             pthread_mutex_unlock(&(table[i].mutex));

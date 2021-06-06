@@ -156,7 +156,7 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
         if(request==CMP){
             strcpy(buf,secret);
             sendto(Authserver_sock,buf,secret_max_size*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,sizeof(struct sockaddr_in));
-            if(recv_timeout(&Authserver_sock,&answer,sizeof(answer)) == ERRTIMEOUT);
+            if(recv_timeout(&Authserver_sock,&answer,sizeof(answer)) == ERRTIMEOUT)
             {
                 return ERRTIMEOUT;
             }

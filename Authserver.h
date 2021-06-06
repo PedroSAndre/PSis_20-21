@@ -54,4 +54,6 @@ void delete_All_messages(struct Message * Main);
 
 void delete_All_Entries();
 
+int recvfrom_timeout(int * socket_af_stream, void * to_read, int size_to_read,struct sockaddr * server_sock_addr, socklen_t * len);
+
 #endif

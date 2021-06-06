@@ -2,9 +2,6 @@
 #include "Authserver.h"
 
 
-
-
-
 /*HashIndex()   This function assigns an index to a certain group.
                         
                 Arguments:  group   
@@ -276,4 +273,24 @@ void delete_All_Entries(){
     }
 }
 
+int recvfrom_timeout(int * socket_af_stream, void * to_read, int size_to_read,struct sockaddr * server_sock_addr, socklen_t * len)
+{
+    struct timeval tmout;
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(*socket_af_stream, &rfds);
+    
+    tmout.tv_sec = (long)timeout;
+    tmout.tv_usec = 0;
+
+    if(select(*socket_af_stream+1, &rfds, (fd_set *) 0, (fd_set *) 0, &tmout)>0)
+    {
+        recvfrom(*socket_af_stream,to_read,size_to_read,0,server_sock_addr,len);
+    }
+    else
+    {
+        return ERRTIMEOUT;
+    }
+    return SUCCESS; 
+}
 

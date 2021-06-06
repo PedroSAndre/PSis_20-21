@@ -27,7 +27,7 @@ Authserver.o: Basic.h Authserver.h Authserver.c
 	gcc -g -c Authserver.c
 
 KVS-AuthServer.o: Basic.h Authserver.h KVS-AuthServer.c
-	gcc -g -c KVS-AuthServer.c
+	gcc -g -pthread -c KVS-AuthServer.c
 
 
 
@@ -39,7 +39,7 @@ LocalServer: key_value_struct.o group_table_struct.o app_status_struct.o Localse
 	gcc -g -pthread key_value_struct.o group_table_struct.o app_status_struct.o Localserver_aux.o KVS-LocalServer.o -o KVS-LocalServer.out
 
 AuthServer: Authserver.o KVS-AuthServer.o
-	gcc -g KVS-AuthServer.o Authserver.o -o KVS-AuthServer.out
+	gcc -g -pthread KVS-AuthServer.o Authserver.o -o KVS-AuthServer.out
 
 
 ##ALL

@@ -3,7 +3,9 @@
 
 #define SKIPWRTANSWER 2
 
+void quit_auth(void *arg);
 
+int server_status=1;
 
 /*KVS-AuthServer    This program will be reponsible for receiving requests from the local server, such as, to create, delete, get the secret of groups and even 
                     authenticate group-secret pairs.
@@ -18,6 +20,7 @@ int main(int argc, char**argv)
     struct sockaddr_in kvs_authserver_sock_addr;
     struct sockaddr_in kvs_localserver_sock_addr;
     socklen_t len = sizeof(kvs_localserver_sock_addr);
+    pthread_t quit_auth_thread_ptid;
 
     struct Message * Current, * Main=NULL;
 
@@ -29,6 +32,12 @@ int main(int argc, char**argv)
     char buf[group_id_max_size+2];
 
     srand(time(NULL));
+
+    if(pthread_create(&quit_auth_thread_ptid,NULL,(void *)&quit_auth,NULL)<0)
+    {
+        perror("Error creating thread\n");
+        return ERRPTHR;
+    }
 
     if(argc !=2){
         perror("Wrong arguments");
@@ -65,15 +74,13 @@ int main(int argc, char**argv)
     memset(&kvs_localserver_sock_addr,0,sizeof(struct sockaddr_in));
 
 
-    while(1){
-        answer=0;
-
-        if(recvfrom(kvs_authserver_sock,buf,(group_id_max_size+2)*sizeof(char),0,(struct sockaddr *)&kvs_localserver_sock_addr,&len)==-1)
+    while(server_status){
+        if(recvfrom_timeout(&kvs_authserver_sock,buf,(group_id_max_size+2)*sizeof(char),(struct sockaddr *)&kvs_localserver_sock_addr,&len)==ERRTIMEOUT)
         {
-            perror("Error receving connection\n");
-            break;
+            continue;
         }
         printf("Received: %s\n",buf);
+        answer=0;
         
 
         Current=recoverClientMessage(buf,kvs_localserver_sock_addr,&Main,&err);
@@ -133,6 +140,7 @@ int main(int argc, char**argv)
         }   
     }
 
+    pthread_join(quit_auth_thread_ptid, NULL);
     delete_All_messages(Main);
     delete_All_Entries();
     
@@ -141,5 +149,15 @@ int main(int argc, char**argv)
             perror("Error closing connection");
             return ERRCLS;
         }
-    return 0;
+        
+    printf("Server terminated sucessfully\n");
+    return SUCCESS;
+}
+
+void quit_auth(void *arg)
+{
+    printf("*****Welcome to KVS-Auth-Server*****\nTo exit you just need to press enter\n");
+    getchar();
+    server_status = 0; //Closes server
+    pthread_exit(NULL);
 }

@@ -43,9 +43,10 @@ int main(int argc, char ** argv)
 
     strcpy(deleting_group,"\0");
 
-    if(CreateAuthServerSock(argv[2],argv[1],&Authserver_sock,&Authserver_sock_addr)==ERRSCKBIND)
+    if(createAuthServerSock(argv[2],argv[1],&Authserver_sock,&Authserver_sock_addr)==ERRSCKCREATION)
     {
-        printf("Error binding auth-local server socket\n");
+        printf("Error creating auth-local server socket\n");
+        return ERRSCKCREATION;
     }
 
     state = inicialize_app_status();

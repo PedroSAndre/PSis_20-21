@@ -5,7 +5,7 @@
 
 pthread_mutex_t acess_auth;
 
-/*createAndBind_UNIX_stream_Socket()   Deals with socket creation and bidding
+/*createAndBind_UNIX_stream_Socket()   Deals with UNIX Stream socket creation and bidding
 
                 Arguments:  sock_addr   - string with socket path
                         
@@ -41,10 +41,10 @@ int createAndBind_UNIX_stream_Socket(char * sock_addr)
 
 /*accept_connection_timeout()   Accepts connections if timeout is not reached
 
-                Arguments:  sock_addr   - string with socket path
+                Arguments:  socket_af_stream    - file descriptor of the socket to acept connectios
                         
-                Returns:    client_sock     - file descriptor of the socket to comunicate with the client
-                            ERRTIMEOUT      - attempt connection timed out*/
+                Returns:    client_sock         - file descriptor of the socket to comunicate with the client
+                            ERRTIMEOUT          - attempt connection timed out*/
 int accept_connection_timeout(int * socket_af_stream)
 {
     struct timeval tmout;
@@ -72,7 +72,7 @@ int accept_connection_timeout(int * socket_af_stream)
                             to_read             - buffer that the data will be placed in after reading
                             size_to_read        - max size of the buffer
                         
-                Returns:    SUCCESS         - Read something withing timeout
+                Returns:    SUCCESS         - Read something within timeout
                             ERRTIMEOUT      - Has not read anything until timetout*/
 int read_timeout(int * socket_af_stream, void * to_read, int size_to_read)
 {
@@ -100,8 +100,8 @@ int read_timeout(int * socket_af_stream, void * to_read, int size_to_read)
                             to_read             - buffer that the data will be placed in after reading
                             size_to_read        - max size of the buffer
                         
-                Returns:    SUCCESS         - Read something withing timeout
-                            ERRTIMEOUT      - Has not read anything until timetout*/
+                Returns:    SUCCESS         - Read something within timeout
+                            ERRTIMEOUT      - Has not read anything until timeout*/
 int recv_timeout(int * socket_af_stream, void * to_read, int size_to_read)
 {
     struct timeval tmout;
@@ -125,7 +125,7 @@ int recv_timeout(int * socket_af_stream, void * to_read, int size_to_read)
 
 
 
-/*createAuthServerSock()   Deals with the cretaion of the Auth server sock. It also assigns the address (IP and port) of the Auth Server to the Authserver_sock_addr
+/*createAuthServerSock()   Deals with the creation of the Auth server sock. It also assigns the address (IP and port) of the Auth Server to the Authserver_sock_addr
 
                 Arguments:  port_str                - string with the port of the server
                             authaddr_str            - string with the IP of the server
@@ -133,7 +133,7 @@ int recv_timeout(int * socket_af_stream, void * to_read, int size_to_read)
                             Authserver_sock_addr    - socket address
                         
                 Returns:    SUCCESS         - Created socket successfully
-                            ERRSCKCREATION  - Error binding socket*/
+                            ERRSCKCREATION  - Error creating socket*/
 int createAuthServerSock(char * port_str,char * authaddr_str, int * Authserver_sock, struct sockaddr_in * Authserver_sock_addr){
     socklen_t len = sizeof(struct sockaddr_in);
 
@@ -153,15 +153,15 @@ int createAuthServerSock(char * port_str,char * authaddr_str, int * Authserver_s
 }
 
 
-/*createAuthServerSock()   Deals with the communication between the local server and the Auth server
+/*AuthServerCom()   Deals with the communication between the local server and the Auth server
 
-                Arguments:  request                 - What type of action you request to the server
+                Arguments:  request                 - What type of action you request to the server (PUT,GET...)
                             group                   - string with the group for the request
                             secret                  - string for the secret of the request, will also be used as the destination whenever the server returns the secret
                             Authserver_sock         - address of the file descriptor
                             Authserver_sock_addr    - socket address
                         
-                Returns:    SUCCESS         - Action performed successfully(string returned)
+                Returns:    SUCCESS         - Action performed successfully (string returned)
                             answer          - response from the Auth Server
                             ERRTIMEOUT      - Waited too long for the Auth server*/
 int AuthServerCom(int request, char * group, char * secret, int Authserver_sock, struct sockaddr_in Authserver_sock_addr){

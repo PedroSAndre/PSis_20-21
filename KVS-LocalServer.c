@@ -12,7 +12,7 @@ void handleAuthCom(void *arg);
 
 //Global variables (to be shared across all server threads)
 int server_status = 1; //1 -> ON; 0 -> OFF 
-int all_clients_connected = 0;
+int all_clients_connected = 0; //starts with no clients connected
 
 struct group_table * groups; //hash table with all groups
 struct app_status * state; //struct with all clients and their time information
@@ -20,15 +20,15 @@ struct app_status * state; //struct with all clients and their time information
 int Authserver_sock;
 struct sockaddr_in Authserver_sock_addr;
 
-pthread_mutex_t acess_group;
+pthread_mutex_t acess_group; //to lock access to groups when critical operations are being executed
 char deleting_group[group_id_max_size];
 
+/*./KVS-LocalServer.out     Inicialization and control of the server
 
-
-
+                            Arguments:  - argv[1] - IP of auth-server
+                                        - argv[2] - PORT of auth-server*/
 int main(int argc, char ** argv)
 {
-    int *j;
     int selector;
     int aux = 0;
     char input_string[input_string_max_size] = "\0";
@@ -213,7 +213,7 @@ int main(int argc, char ** argv)
 
 
 
-//Thread functions
+//acceptConnections()   Thread function that is constantly (until server_status=0) accepting connections and giving them to handleConnection() to handle
 void acceptConnections(void *arg)
 {
     int kvs_localserver_sock;
@@ -259,6 +259,9 @@ void acceptConnections(void *arg)
     pthread_exit(NULL);
 }
 
+/*acceptConnections()   Thread function that handles a connection to a client
+
+                        Arguments:  arg[0]  - file descriptor of the client socket*/
 void handleConnection(void *arg)
 {
     int client_sock;

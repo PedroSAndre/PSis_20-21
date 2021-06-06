@@ -1,7 +1,7 @@
 #include "Basic.h"
 #include "key_value_struct.h"
 
-//Este ficheiro irá guardar as funções relacionadas com hash table para o par key-value
+//This file will store all functions related to storing key-value pairs
 
 
 /*hashCode_key_value()   This function assigns an index to a certain key.

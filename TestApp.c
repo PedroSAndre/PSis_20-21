@@ -1,6 +1,7 @@
 #include "Basic.h"
 #include "KVS-lib.h"
 
+//This is a very basic app to test the KVS-Lib.c Asks the user for inputs and does whaat it needs accordingly
 
 void f(char * key){
     printf("The key with name %s was changed\n", key);

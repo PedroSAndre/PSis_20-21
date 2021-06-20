@@ -290,6 +290,7 @@ void handleConnection(void *arg)
 
     answer=AuthServerCom(CMP,group_id,secret,Authserver_sock,Authserver_sock_addr);
 
+    pthread_mutex_lock(&acess_group);
     local_key_value_table = hashGet_group_table(groups, group_id);
     if(local_key_value_table == NULL)
     {
@@ -298,7 +299,7 @@ void handleConnection(void *arg)
 
     if(answer==SUCCESS)
     {
-        pthread_mutex_lock(&acess_group);
+        
         if(add_status(&state, local_PID, client_PID, &all_clients_connected,group_id,deleting_group) <SUCCESS)
         {
             printf("Error updating status\nNot allowing new connection\n\n");

@@ -110,13 +110,14 @@ int main(int argc, char ** argv)
                 printf("Secret of group %s\n%s\n",input_string,secret);
                 pthread_mutex_lock(&acess_group);
                 aux=hashInsert_group_table(groups, input_string);
+                pthread_mutex_unlock(&acess_group);
                 if(aux == SUCCESS)
                     printf("Group %s created with sucess\n\n", input_string);
                 else if(aux==DENIED)
                     printf("Group %s already created\n\n", input_string);
                 else
                     printf("Error alocating memory for the creation of selected group\n\n");
-                pthread_mutex_unlock(&acess_group);
+                
             }
         }
         else if(selector==2)
@@ -166,7 +167,7 @@ int main(int argc, char ** argv)
             do
             {
                 fgets(input_string, group_id_max_size, stdin); //asks until string is not empty
-            } while(strlen(input_string)==1);
+            } while(strlen(input_string)==1); 
             input_string[strlen(input_string)-1]='\0';
             aux=AuthServerCom(GET,input_string,secret,Authserver_sock,Authserver_sock_addr);
             if(aux == ERRRD)
@@ -380,6 +381,7 @@ void handleConnection(void *arg)
     }
     else
     {
+        pthread_mutex_unlock(&acess_group);
         write(client_sock,&answer,sizeof(answer));
     }
     

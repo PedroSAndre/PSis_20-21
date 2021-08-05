@@ -180,11 +180,13 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
         aux=recv_timeout(&Authserver_sock,buf,secret_max_size*sizeof(char));
         if(aux==ERRTIMEOUT)
         {
+            pthread_mutex_unlock(&acess_auth);
             return ERRTIMEOUT;
         }
         pthread_mutex_unlock(&acess_auth);
         if(strcmp(buf, "\0") == 0)
         {
+            pthread_mutex_unlock(&acess_auth);
             return ERRRD;
         }
         strcpy(secret,buf);
@@ -195,17 +197,21 @@ int AuthServerCom(int request, char * group, char * secret, int Authserver_sock,
         aux=recv_timeout(&Authserver_sock,&answer,sizeof(answer));
         if(aux == ERRTIMEOUT)
         {
+            pthread_mutex_unlock(&acess_auth);
             return ERRTIMEOUT;
         }
-        pthread_mutex_unlock(&acess_auth);
+        
         if(request==CMP){
             strcpy(buf,secret);
             sendto(Authserver_sock,buf,secret_max_size*sizeof(char),0, (struct sockaddr*)&Authserver_sock_addr ,sizeof(struct sockaddr_in));
             if(recv_timeout(&Authserver_sock,&answer,sizeof(answer)) == ERRTIMEOUT)
             {
+                pthread_mutex_unlock(&acess_auth);
                 return ERRTIMEOUT;
             }
+            
         }
     }
+    pthread_mutex_unlock(&acess_auth);
     return answer;
 }

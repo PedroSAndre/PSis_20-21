@@ -9,10 +9,16 @@ struct key_value
 {
     char key[key_max_size];
     char * value;
-    int signal;
+    int signal[max_waiting_key];
     pthread_cond_t cond; //condition variable to make callaback of a key possible
     pthread_mutex_t mutex;
     struct key_value * next;
+};
+
+struct cond_mutex{
+    pthread_cond_t * cond; 
+    pthread_mutex_t * mutex;
+    int client_PID;
 };
 
 
@@ -35,8 +41,12 @@ int hashDelete_key_value(struct key_value * table, char * key);
 void hashFree_key_value(struct key_value * table);
 
 //This function will wait for a condition variable associated to the key value is signaled, when key is changed
-int hashWaitChange_key_value(struct key_value * table, char * key);
+int hashWaitChange_key_value(struct key_value * table, char * key, int client_PID);
 
 //signal_all_callback()   When deleting a table (deleting a group), it is necessary to signal all callbacks for them to not get stuck while the server is waiting
 void signal_all_callback(struct key_value * table);
+
+void waitingkey(void * arg);
+
+int signal_processes(int signal[],char * key);
 #endif

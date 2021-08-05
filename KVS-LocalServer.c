@@ -87,6 +87,7 @@ int main(int argc, char ** argv)
         if(selector==0)
         {
             server_status=0;
+            //signal_all_callback(hashGet_group_table(groups,input_string));
         }
         else if(selector==1)
         {
@@ -362,7 +363,7 @@ void handleConnection(void *arg)
                 read(client_sock,key,key_max_size*sizeof(char));
                 if(strcmp(group_id,deleting_group)!=0)
                 {
-                    answer=hashWaitChange_key_value(local_key_value_table,key);
+                    answer=hashWaitChange_key_value(local_key_value_table,key,client_PID);
                 }
                 else
                 {

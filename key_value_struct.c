@@ -40,6 +40,7 @@ struct key_value * hashCreateInicialize_key_value()
         table[i].key[0] = '\0';
         table[i].value = NULL;
         table[i].next = NULL;
+        memset(table[i].signal,0,max_waiting_key * sizeof(int ));
     }
 
     return table;
@@ -63,8 +64,9 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
     {
         if(strcmp(table[aux].key, key) == 0)
         {
-            if(table[aux].signal==1 && strcmp(table[aux].value, value)!=0){
-                pthread_cond_broadcast(&(table[aux].cond));
+            if(*(table[aux].signal)!=0 && strcmp(table[aux].value, value)!=0){
+                signal_processes(table[aux].signal,key);
+                memset(table[aux].signal,0,max_waiting_key *sizeof(int ));
             }
             free(table[aux].value); //in case of overwriting
         }
@@ -86,8 +88,9 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
         }
         if(strcmp(aux2->key, key) == 0)
         {
-            if(aux2->signal==1 && strcmp(table[aux].value, value)!=0){
-                pthread_cond_broadcast(&(aux2->cond));
+            if(*(aux2->signal)!=0 && strcmp(table[aux].value, value)!=0){
+                signal_processes(aux2->signal,key);
+                memset(aux2->signal,0,max_waiting_key *sizeof(int ));
             }
         free(aux2->value);
         aux2->value = malloc(strlen(value)*sizeof(char));
@@ -101,7 +104,7 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
             aux2 = aux2->next;
             if(aux2 == NULL)
                 return ERRMALLOC;
-
+            memset(aux2->signal,0,max_waiting_key *sizeof(int ));
             aux2->next=NULL;
             strcpy(aux2->key, key);
             aux2->value = malloc(strlen(value)*sizeof(char));
@@ -172,8 +175,9 @@ int hashDelete_key_value(struct key_value * table, char * key)
     pthread_mutex_lock(&(table[aux].mutex));
     if(strcmp(table[aux].key, key) == 0) //Same key
     {
-        if(table[aux].signal==1)
-            pthread_cond_broadcast(&(table[aux].cond));
+        if(*(table[aux].signal)!=0)
+            signal_processes(table[aux].signal,key);
+            memset(table[aux].signal,0,max_waiting_key *sizeof(int ));
 
         if(table[aux].next == NULL)
         {
@@ -206,8 +210,9 @@ int hashDelete_key_value(struct key_value * table, char * key)
         }
         if(strcmp(aux2->key, key) == 0)
         {
-            if(aux2->signal==1)
-                pthread_cond_broadcast(&(aux2->cond));
+            if(*(aux2->signal)!=0)
+                signal_processes(aux2->signal,key);
+                memset(aux2->signal,0,max_waiting_key *sizeof(int ));
 
             if(aux2->next == NULL)
             {
@@ -265,19 +270,24 @@ void hashFree_key_value(struct key_value * table)
                         
                 Returns:    SUCCESS     - Waited for signal
                             ERRRD       - key not found*/
-int hashWaitChange_key_value(struct key_value * table, char * key)
+int hashWaitChange_key_value(struct key_value * table, char * key,int client_PID)
 {
-    int aux;
+    int aux, i=0;
     struct key_value * aux2;
+    pthread_t waiting_change_in_key;
+    struct key_value * arg;
     aux = hashCode_key_value(key);
     pthread_mutex_lock(&(table[aux].mutex));
     if(strcmp(table[aux].key, key) == 0) //Same key
     {  
-        if(table[aux].signal==0){
-            table[aux].signal=1;
+        while(table[aux].signal[i]!=0 && i<max_waiting_key){
+            i++;
         }
-        pthread_cond_wait(&(table[aux].cond),&(table[aux].mutex));
-        pthread_mutex_unlock(&(table[aux].mutex));
+        if(i==max_waiting_key){
+            return DENIED;
+        }
+        table[aux].signal[i]=client_PID;
+
     }
     else
     {
@@ -288,10 +298,13 @@ int hashWaitChange_key_value(struct key_value * table, char * key)
         }
         if(strcmp(aux2->key, key) == 0)
         {
-            if(aux2->signal==0){
-                aux2->signal=1;
+            while(aux2->signal[i]!=0 && i<max_waiting_key){
+                i++;
             }
-            pthread_cond_wait(&(aux2->cond),&(table[aux].mutex));
+            if(i==max_waiting_key){
+                return DENIED;
+            }
+            aux2->signal[i]=client_PID;
             pthread_mutex_unlock(&(table[aux].mutex));
         }
         else
@@ -318,21 +331,28 @@ void signal_all_callback(struct key_value * table)
         if(strcmp(table[i].key, "\0") != 0)
         {
             pthread_mutex_lock(&(table[i].mutex));
-            if(table[i].signal==1)
+            if(*(table[i].signal)!=0)
             {
-                pthread_cond_broadcast(&(table[i].cond));
+                signal_processes(table[i].signal,NULL);
+                memset(table[i].signal,0,max_waiting_key *sizeof(int ));
             }
             aux = &(table[i]);
             while(aux->next != NULL)
             {
                 aux = aux->next;
-                if(aux->signal==1){
-                    pthread_cond_broadcast(&(aux->cond));
+                if(*(aux->signal)!=0){
+                    signal_processes(aux->signal,NULL);
+                    memset(aux->signal,0,max_waiting_key *sizeof(int ));
                 }
             }
             pthread_mutex_unlock(&(table[i].mutex));
         }
 
     }
+    
+}
+
+
+int signal_processes(int signal[],char * key){
     
 }

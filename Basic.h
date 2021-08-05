@@ -26,6 +26,7 @@
 #define key_max_size 512
 #define group_id_max_size 1024
 #define secret_max_size 1024
+#define max_waiting_key 100
 //Hash tables sizes
 #define key_value_table_size 1021
 #define n_groups_max 1021

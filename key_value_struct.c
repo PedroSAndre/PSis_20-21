@@ -64,7 +64,7 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
         if(strcmp(table[aux].key, key) == 0)
         {
             if(table[aux].signal==1 && strcmp(table[aux].value, value)!=0){
-                pthread_cond_signal(&(table[aux].cond));
+                pthread_cond_broadcast(&(table[aux].cond));
             }
             free(table[aux].value); //in case of overwriting
         }
@@ -87,7 +87,7 @@ int hashInsert_key_value(struct key_value * table, char * key, char * value)
         if(strcmp(aux2->key, key) == 0)
         {
             if(aux2->signal==1 && strcmp(table[aux].value, value)!=0){
-                pthread_cond_signal(&(aux2->cond));
+                pthread_cond_broadcast(&(aux2->cond));
             }
         free(aux2->value);
         aux2->value = malloc(strlen(value)*sizeof(char));
@@ -173,7 +173,7 @@ int hashDelete_key_value(struct key_value * table, char * key)
     if(strcmp(table[aux].key, key) == 0) //Same key
     {
         if(table[aux].signal==1)
-            pthread_cond_signal(&(table[aux].cond));
+            pthread_cond_broadcast(&(table[aux].cond));
 
         if(table[aux].next == NULL)
         {
@@ -207,7 +207,7 @@ int hashDelete_key_value(struct key_value * table, char * key)
         if(strcmp(aux2->key, key) == 0)
         {
             if(aux2->signal==1)
-                pthread_cond_signal(&(aux2->cond));
+                pthread_cond_broadcast(&(aux2->cond));
 
             if(aux2->next == NULL)
             {
@@ -320,14 +320,14 @@ void signal_all_callback(struct key_value * table)
             pthread_mutex_lock(&(table[i].mutex));
             if(table[i].signal==1)
             {
-                pthread_cond_signal(&(table[i].cond));
+                pthread_cond_broadcast(&(table[i].cond));
             }
             aux = &(table[i]);
             while(aux->next != NULL)
             {
                 aux = aux->next;
                 if(aux->signal==1){
-                    pthread_cond_signal(&(aux->cond));
+                    pthread_cond_broadcast(&(aux->cond));
                 }
             }
             pthread_mutex_unlock(&(table[i].mutex));
